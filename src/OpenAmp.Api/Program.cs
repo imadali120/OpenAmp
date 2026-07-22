@@ -7,6 +7,7 @@ using OpenAmp.Api.Authentication;
 using OpenAmp.Api.Errors;
 using OpenAmp.Application.Auth;
 using OpenAmp.Application.Common;
+using OpenAmp.Application.Mobile;
 using OpenAmp.Application.Payments;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Infrastructure.DependencyInjection;
@@ -60,6 +61,14 @@ builder.Services.AddScoped<IQueryHandler<DohvatiRezervacijuQuery, RezervacijaDto
 builder.Services.AddScoped<IQueryHandler<DohvatiSlobodneTermineQuery, IReadOnlyCollection<SlobodanTerminDto>>, DohvatiSlobodneTermineQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<KreirajPaymentIntentCommand, PaymentIntentDto>, KreirajPaymentIntentCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ObradiStripeWebhookCommand, bool>, ObradiStripeWebhookCommandHandler>();
+builder.Services.AddScoped<IQueryHandler<PretraziSaleQuery, IReadOnlyCollection<SalaCardDto>>, PretraziSaleQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiSaluQuery, SalaDetaljiDto>, DohvatiSaluQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiMobileSifarnikeQuery, MobileLookupsDto>, DohvatiMobileSifarnikeQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiMojeBendoveQuery, IReadOnlyCollection<BendDto>>, DohvatiMojeBendoveQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<KreirajBendCommand, BendDto>, KreirajBendCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<PosaljiPozivnicuBendaCommand, PozivnicaBendaDto>, PosaljiPozivnicuBendaCommandHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiMojeRezervacijeQuery, IReadOnlyCollection<MobileRezervacijaDto>>, DohvatiMojeRezervacijeQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiProfilPregledQuery, ProfilPregledDto>, DohvatiProfilPregledQueryHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();

@@ -1,0 +1,162 @@
+using OpenAmp.Application.Common;
+
+namespace OpenAmp.Application.Mobile;
+
+public sealed record SifarnikDto(int Id, string Kod, string Naziv);
+
+public sealed record MobileLookupsDto(
+    IReadOnlyCollection<SifarnikDto> Zanrovi,
+    IReadOnlyCollection<SifarnikDto> KategorijeOpreme,
+    IReadOnlyCollection<SifarnikDto> Instrumenti);
+
+public sealed record SalaCardDto(
+    int Id,
+    string Naziv,
+    string Studio,
+    string Grad,
+    int Kapacitet,
+    decimal CijenaPoSatu,
+    string Status,
+    string? SlikaUrl,
+    decimal ProsjecnaOcjena,
+    int BrojRecenzija,
+    IReadOnlyCollection<string> Oprema,
+    bool Dostupna);
+
+public sealed record OpremaZaNajamDto(
+    int Id,
+    string Naziv,
+    string Kategorija,
+    string? Opis,
+    decimal CijenaPoSatu,
+    bool Dostupna);
+
+public sealed record ArtikalZaKupovinuDto(
+    int Id,
+    string Naziv,
+    string Kategorija,
+    string? Opis,
+    decimal Cijena,
+    int NaStanju);
+
+public sealed record RecenzijaSaleDto(
+    int Id,
+    int Ocjena,
+    string? Komentar,
+    string Korisnik,
+    DateTime KreiranaUtc);
+
+public sealed record SalaDetaljiDto(
+    int Id,
+    string Naziv,
+    string Studio,
+    string Grad,
+    string Adresa,
+    int Kapacitet,
+    decimal CijenaPoSatu,
+    string? Opis,
+    string? Akustika,
+    decimal? GeografskaSirina,
+    decimal? GeografskaDuzina,
+    decimal ProsjecnaOcjena,
+    int BrojRecenzija,
+    IReadOnlyCollection<string> Galerija,
+    IReadOnlyCollection<OpremaZaNajamDto> Oprema,
+    IReadOnlyCollection<ArtikalZaKupovinuDto> Artikli,
+    IReadOnlyCollection<RecenzijaSaleDto> Recenzije);
+
+public sealed record ClanBendaDto(
+    int KorisnikId,
+    string ImePrezime,
+    string? Instrument,
+    string? Uloga,
+    bool Osnivac);
+
+public sealed record PozivnicaBendaDto(
+    int Id,
+    string Email,
+    string Kod,
+    string Status,
+    DateTime IsticeUtc);
+
+public sealed record BendDto(
+    int Id,
+    string Naziv,
+    string Zanr,
+    string? Opis,
+    string? FotografijaUrl,
+    bool JeOsnivac,
+    int BrojRezervacija,
+    IReadOnlyCollection<ClanBendaDto> Clanovi,
+    IReadOnlyCollection<PozivnicaBendaDto> Pozivnice);
+
+public sealed record MobileRezervacijaDto(
+    int Id,
+    string Sala,
+    string Studio,
+    string Bend,
+    DateTime TerminOdUtc,
+    DateTime TerminDoUtc,
+    decimal UkupnaCijena,
+    string Status,
+    string RowVersion,
+    string? SlikaUrl);
+
+public sealed record ProfilPregledDto(
+    int Id,
+    string Ime,
+    string Prezime,
+    string Email,
+    string? Telefon,
+    string? FotografijaUrl,
+    IReadOnlyCollection<string> Instrumenti,
+    int BrojBendova,
+    int BrojRezervacija,
+    decimal UkupnoSati,
+    int BrojRecenzija,
+    string? OmiljenaSala,
+    string? NajcesciZanr);
+
+public sealed record PretraziSaleQuery(
+    string? Tekst,
+    string? ZanrKod,
+    int? MinimalniKapacitet,
+    string? KategorijaOpremeKod,
+    DateTime? TerminOdUtc,
+    DateTime? TerminDoUtc) : IQuery<IReadOnlyCollection<SalaCardDto>>;
+
+public sealed record DohvatiSaluQuery(int SalaId) : IQuery<SalaDetaljiDto>;
+public sealed record DohvatiMobileSifarnikeQuery : IQuery<MobileLookupsDto>;
+public sealed record DohvatiMojeBendoveQuery(int KorisnikId) : IQuery<IReadOnlyCollection<BendDto>>;
+public sealed record DohvatiMojeRezervacijeQuery(int KorisnikId) : IQuery<IReadOnlyCollection<MobileRezervacijaDto>>;
+public sealed record DohvatiProfilPregledQuery(int KorisnikId) : IQuery<ProfilPregledDto>;
+
+public sealed record KreirajBendCommand(
+    int KorisnikId,
+    string Naziv,
+    int ZanrId,
+    string? Opis) : ICommand<BendDto>;
+
+public sealed record PosaljiPozivnicuBendaCommand(
+    int KorisnikId,
+    int BendId,
+    string Email) : ICommand<PozivnicaBendaDto>;
+
+public interface IMobileExperienceService
+{
+    Task<IReadOnlyCollection<SalaCardDto>> PretraziSaleAsync(
+        PretraziSaleQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<SalaDetaljiDto> DohvatiSaluAsync(int salaId, CancellationToken cancellationToken = default);
+    Task<MobileLookupsDto> DohvatiSifarnikeAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<BendDto>> DohvatiBendoveAsync(int korisnikId, CancellationToken cancellationToken = default);
+    Task<BendDto> KreirajBendAsync(KreirajBendCommand command, CancellationToken cancellationToken = default);
+    Task<PozivnicaBendaDto> PosaljiPozivnicuAsync(
+        PosaljiPozivnicuBendaCommand command,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<MobileRezervacijaDto>> DohvatiRezervacijeAsync(
+        int korisnikId,
+        CancellationToken cancellationToken = default);
+    Task<ProfilPregledDto> DohvatiProfilAsync(int korisnikId, CancellationToken cancellationToken = default);
+}

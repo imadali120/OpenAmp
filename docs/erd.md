@@ -1,6 +1,6 @@
 # OpenAmp ERD — Faze 1 i 2
 
-\`\`\`mermaid
+```mermaid
 erDiagram
     ULOGA ||--o{ KORISNIK : ima
     KORISNIK ||--o{ REFRESH_TOKEN : posjeduje
@@ -134,15 +134,15 @@ erDiagram
         string Tip
         datetime ObradjenUtc
     }
-\`\`\`
+```
 
 ## Pravila integriteta
 
-- \`ClanBenda\` i \`KorisnikInstrument\` koriste kompozitne primarne ključeve.
-- Svaka stavka rezervacije referencira tačno jedan tip: \`Oprema\` ili \`Artikal\`.
+- `ClanBenda` i `KorisnikInstrument` koriste kompozitne primarne ključeve.
+- Svaka stavka rezervacije referencira tačno jedan tip: `Oprema` ili `Artikal`.
 - Ocjena recenzije je ograničena na raspon 1–5.
-- \`TerminDoUtc\` mora biti nakon \`TerminOdUtc\`.
-- \`Rezervacija.RowVersion\` je SQL Server \`rowversion\` concurrency token.
-- Indeks \`IX_Rezervacije_Sala_Termin\` podržava atomsku provjeru preklapanja termina.
+- `TerminDoUtc` mora biti nakon `TerminOdUtc`.
+- `Rezervacija.RowVersion` je SQL Server `rowversion` concurrency token.
+- Indeks `IX_Rezervacije_Sala_Termin` podržava atomsku provjeru preklapanja termina.
 - Hash refresh tokena je jedinstven i stvarni token se nikada ne čuva u bazi.
 - ID Stripe webhook događaja je primarni ključ za idempotentnu obradu.

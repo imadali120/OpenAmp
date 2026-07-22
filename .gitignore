@@ -22,6 +22,8 @@ mono_crash.*
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
+!src/OpenAmp.Mobile/android/app/src/debug/
+!src/OpenAmp.Mobile/android/app/src/debug/AndroidManifest.xml
 [Rr]elease/
 [Rr]eleases/
 x64/

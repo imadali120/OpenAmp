@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OpenAmp.Api.Authentication;
 using OpenAmp.Api.Models;
 using OpenAmp.Application.Common;
+using OpenAmp.Application.Mobile;
 using OpenAmp.Application.Reservations;
 
 namespace OpenAmp.Api.Controllers;
@@ -15,9 +16,14 @@ public sealed class ReservationsController(
     ICommandHandler<IzmijeniRezervacijuCommand, RezervacijaDto> updateHandler,
     ICommandHandler<OtkaziRezervacijuCommand, OtkazivanjeRezultatDto> cancelHandler,
     IQueryHandler<DohvatiRezervacijuQuery, RezervacijaDto> getHandler,
+    IQueryHandler<DohvatiMojeRezervacijeQuery, IReadOnlyCollection<MobileRezervacijaDto>> historyHandler,
     IQueryHandler<DohvatiSlobodneTermineQuery, IReadOnlyCollection<SlobodanTerminDto>> availabilityHandler)
     : ControllerBase
 {
+    [HttpGet("mine")]
+    public Task<IReadOnlyCollection<MobileRezervacijaDto>> Mine(CancellationToken cancellationToken) =>
+        historyHandler.HandleAsync(new DohvatiMojeRezervacijeQuery(User.KorisnikId()), cancellationToken);
+
     [AllowAnonymous]
     [HttpGet("availability")]
     public Task<IReadOnlyCollection<SlobodanTerminDto>> Availability(

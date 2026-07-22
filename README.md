@@ -2,85 +2,77 @@
 
 OpenAmp je platforma za rezervaciju sala za muzičke probe, upravljanje bendovima, studijima, opremom i potrošnim artiklima.
 
-Repozitorij trenutno sadrži:
+Repozitorij sadrži:
 
 - FAZU 1: SQL Server bazu, EF Core model, migracije i seed podatke
 - FAZU 2: REST API, JWT autentikaciju, logiku rezervacija i Stripe plaćanje
+- FAZU 3: Flutter mobilnu aplikaciju za Android i iOS
 
 ## Implementirano
 
-- .NET 8 slojevita arhitektura: \`Domain\`, \`Application\`, \`Infrastructure\` i \`Api\`
+- .NET 8 slojevita arhitektura: `Domain`, `Application`, `Infrastructure` i `Api`
 - Entity Framework Core 8 i SQL Server 2022
-- Fluent API konfiguracije ključeva, relacija, indeksa i ograničenja
-- seed podaci za uloge, statuse, žanrove, instrumente, studije, sale i inventar
 - JWT registracija, prijava i rotacija refresh tokena
-- PBKDF2-SHA512 hashiranje lozinki i hashirani refresh tokeni u bazi
-- provjera slobodnih termina sale i opreme
-- kalkulacija cijene sale, najma opreme i kupljenih artikala
-- izmjena i otkazivanje rezervacije uz optimistic concurrency (\`RowVersion\`)
+- provjera termina, kalkulacija cijene, izmjena i otkazivanje rezervacije
 - Stripe Payment Intents, potpisani webhook i automatski refund
-- Swagger/OpenAPI i health endpoint
-- CQRS handleri, DTO modeli i servisni/repository ugovori
+- Flutter aplikacija sa Riverpod state managementom i Dio API klijentom
+- pretraga i detalji sala, satni slotovi, oprema, artikli i Stripe PaymentSheet
+- upravljanje bendovima i pozivnicama, historija proba i profil
+- Swagger/OpenAPI, health endpoint i testovi
 - Mermaid [ERD](docs/erd.md)
 
 ## Struktura
 
-\`\`\`text
+```text
 src/
   OpenAmp.Domain/          Entiteti i domenska pravila
   OpenAmp.Application/     DTO modeli, CQRS komande/upiti i ugovori
   OpenAmp.Infrastructure/  EF Core, autentikacija, rezervacije i Stripe
   OpenAmp.Api/             REST kontroleri, JWT, Swagger i middleware
+  OpenAmp.Mobile/          Flutter aplikacija za muzičare
 tests/
   OpenAmp.Infrastructure.Tests/
 docs/
   erd.md
   phase2-api.md
-\`\`\`
+  phase3-mobile.md
+```
 
-## Pokretanje
+## Pokretanje baze i API-ja
 
 Za razvoj su potrebni .NET 8 SDK i Docker Desktop.
 
-1. Pokrenuti SQL Server:
+```powershell
+docker compose up -d
+dotnet run --project src/OpenAmp.Api --launch-profile http
+```
 
-   \`\`\`powershell
-   docker compose up -d
-   docker compose ps
-   \`\`\`
+- Swagger: `http://localhost:5264/swagger`
+- health check: `http://localhost:5264/health`
 
-2. Pokrenuti API:
+U Development okruženju API automatski primjenjuje EF Core migracije. Razvojni SQL password i JWT ključ služe samo za lokalni rad.
 
-   \`\`\`powershell
-   dotnet restore
-   dotnet run --project src/OpenAmp.Api --launch-profile https
-   \`\`\`
+## Pokretanje Flutter aplikacije
 
-3. Otvoriti:
+```powershell
+cd src/OpenAmp.Mobile
+flutter pub get
+flutter run --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264 --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
 
-   - Swagger: \`https://localhost:7149/swagger\`
-   - health check: \`https://localhost:7149/health\`
-
-U Development okruženju API automatski primjenjuje EF Core migracije. Razvojni SQL password i JWT ključ iz \`appsettings.Development.json\` služe samo za lokalni rad i moraju se zamijeniti prije deploymenta.
-
-Detaljni endpointi i Stripe konfiguracija nalaze se u [uputama za FAZU 2](docs/phase2-api.md).
-
-## Ručno izvršavanje migracija
-
-\`\`\`powershell
-$env:OPENAMP_CONNECTION_STRING='Server=localhost,1433;Database=OpenAmp;User Id=sa;Password=OpenAmp_Dev123!;TrustServerCertificate=True;Encrypt=False'
-dotnet tool restore
-dotnet tool run dotnet-ef database update --project src/OpenAmp.Infrastructure
-\`\`\`
+`10.0.2.2` je adresa host računara iz Android emulatora. Za fizički uređaj koristi lokalnu IP adresu računara. Detaljne upute su u [dokumentaciji FAZE 3](docs/phase3-mobile.md).
 
 ## Build i testovi
 
-\`\`\`powershell
-dotnet restore
-dotnet build --configuration Release --no-restore
-dotnet test --configuration Release --no-build
-\`\`\`
+```powershell
+dotnet build OpenAmp.sln --configuration Release
+dotnet test OpenAmp.sln --configuration Release --no-build
+
+cd src/OpenAmp.Mobile
+flutter analyze
+flutter test
+```
 
 ## Zaštita rezervacija
 
-\`RowVersion\` otkriva konkurentnu izmjenu postojeće rezervacije. Kreiranje i provjera preklapanja izvršavaju se u SQL Server \`SERIALIZABLE\` transakciji. Granice termina su poluotvorene (\`[od, do)\`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.
+`RowVersion` otkriva konkurentnu izmjenu postojeće rezervacije. Kreiranje i provjera preklapanja izvršavaju se u SQL Server `SERIALIZABLE` transakciji. Granice termina su poluotvorene (`[od, do)`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.
