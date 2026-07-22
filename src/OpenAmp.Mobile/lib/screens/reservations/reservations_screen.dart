@@ -29,7 +29,7 @@ class ReservationsScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Moji termini'),
+          title: const Text('Rezervacije'),
           actions: [
             IconButton(
               onPressed: state.busy
@@ -43,20 +43,6 @@ class ReservationsScreen extends ConsumerWidget {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 5, 18, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SectionEyebrow('Session log'),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Probe bez\nizgubljenog ritma.',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ],
-              ),
-            ),
             Container(
               color: AppColors.paper,
               child: const TabBar(

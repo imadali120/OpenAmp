@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 import 'package:openamp_mobile/models/models.dart';
+import 'package:openamp_mobile/screens/profile/notifications_screen.dart';
 import 'package:openamp_mobile/state/app_state.dart';
 import 'package:openamp_mobile/widgets/common.dart';
 
@@ -49,10 +50,10 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   const Row(
                     children: [
-                      SectionEyebrow('OpenAmp member', color: AppColors.signal),
+                      SectionEyebrow('Profil', color: AppColors.signal),
                       Spacer(),
                       Text(
-                        'ACTIVE',
+                        'AKTIVAN',
                         style: TextStyle(
                           color: AppColors.success,
                           fontSize: 9,
@@ -184,7 +185,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
             if (profile.favoriteHall != null || profile.topGenre != null) ...[
               const SizedBox(height: 27),
-              const SectionEyebrow('Tvoj sound'),
+              const SectionEyebrow('Statistika'),
               const SizedBox(height: 9),
               Text(
                 'Studio statistika',
@@ -207,7 +208,7 @@ class ProfileScreen extends ConsumerWidget {
                     Expanded(
                       child: _Highlight(
                         icon: Icons.graphic_eq_rounded,
-                        label: 'TOP ŽANR',
+                        label: 'NAJČEŠĆI ŽANR',
                         value: profile.topGenre!,
                       ),
                     ),
@@ -219,7 +220,7 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             _ProfileAction(
               icon: Icons.person_outline,
-              label: 'Lični podaci',
+              label: 'Lični profil',
               onTap: () => _editProfile(context, ref),
             ),
             _ProfileAction(
@@ -230,6 +231,15 @@ class ProfileScreen extends ConsumerWidget {
             _ProfileAction(
               icon: Icons.notifications_none_rounded,
               label: 'Notifikacije',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const NotificationsScreen(),
+                ),
+              ),
+            ),
+            _ProfileAction(
+              icon: Icons.tune_rounded,
+              label: 'Jezik i privatnost',
               onTap: () => _editSettings(context, ref),
             ),
             _ProfileAction(
@@ -306,19 +316,24 @@ class ProfileScreen extends ConsumerWidget {
                 Wrap(
                   spacing: 7,
                   runSpacing: 7,
-                  children: (state.lookups?.instruments ?? [])
-                      .map(
-                        (item) => FilterChip(
-                          label: Text(item.name),
-                          selected: selected.contains(item.id),
-                          onSelected: (value) => setDialogState(
-                            () => value
-                                ? selected.add(item.id)
-                                : selected.remove(item.id),
-                          ),
-                        ),
-                      )
-                      .toList(),
+                  children: (state.lookups?.instruments ?? []).map((item) {
+                    final isSelected = selected.contains(item.id);
+                    return FilterChip(
+                      label: Text(item.name),
+                      selected: isSelected,
+                      selectedColor: AppColors.ink,
+                      checkmarkColor: AppColors.signal,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      onSelected: (value) => setDialogState(
+                        () => value
+                            ? selected.add(item.id)
+                            : selected.remove(item.id),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ],
             ),

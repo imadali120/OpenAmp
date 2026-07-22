@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openamp_mobile/core/network/api_client.dart';
+import 'package:openamp_mobile/core/notifications/local_notification_service.dart';
 import 'package:openamp_mobile/core/storage/session_store.dart';
 import 'package:openamp_mobile/models/models.dart';
 import 'package:openamp_mobile/repositories/openamp_repository.dart';
@@ -130,6 +131,10 @@ class AppController extends Notifier<AppState> {
 
   Future<void> logout() async {
     await _sessionStore.clear();
+    await LocalNotificationService.instance.syncReservations(
+      enabled: false,
+      reservations: const [],
+    );
     state = AppState(
       initialized: true,
       lookups: state.lookups,
@@ -170,6 +175,10 @@ class AppController extends Notifier<AppState> {
         profile: values[3] as ProfileOverview,
         favoriteHallIds: values[4] as Set<int>,
         settings: values[5] as UserSettings,
+      );
+      await LocalNotificationService.instance.syncReservations(
+        enabled: state.settings?.pushNotifications ?? false,
+        reservations: state.reservations,
       );
     });
   }
@@ -304,6 +313,10 @@ class AppController extends Notifier<AppState> {
       state = state.copyWith(
         reservations: await _repository.getMyReservations(),
         profile: await _repository.getProfile(),
+      );
+      await LocalNotificationService.instance.syncReservations(
+        enabled: state.settings?.pushNotifications ?? false,
+        reservations: state.reservations,
       );
     }, showBusy: false);
   }

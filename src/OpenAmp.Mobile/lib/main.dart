@@ -4,10 +4,12 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:openamp_mobile/app.dart';
 import 'package:openamp_mobile/core/config/app_config.dart';
+import 'package:openamp_mobile/core/notifications/local_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('bs');
+  await LocalNotificationService.instance.initialize();
   if (AppConfig.stripePublishableKey.isNotEmpty) {
     Stripe.publishableKey = AppConfig.stripePublishableKey;
     Stripe.urlScheme = 'openamp';

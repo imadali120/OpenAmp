@@ -29,15 +29,13 @@ class BandsScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 5, 18, 24),
           children: [
-            const SectionEyebrow('Band roster'),
-            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: Text(
-                    'Tvoja postava.\nTvoj zvuk.',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    'Bendovi',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 IconButton.filled(

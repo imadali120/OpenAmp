@@ -31,6 +31,8 @@
 - lokacija studija otvorena u vanjskoj navigaciji
 - uređivanje profila, fotografije, kontakta i instrumenata
 - postavke push/email obavijesti, jezika i privatnosti profila
+- Android/iOS lokalni podsjetnik dva sata prije probe, sistemska dozvola i testna notifikacija
+- ekran obavijesti sa predstojećim rezervacijama i pozivnicama za bend
 - promjena lozinke
 - primljene pozivnice za bend, prihvatanje/odbijanje, uređivanje člana, uklanjanje i napuštanje benda
 - Stripe Customer Session za sigurno čuvanje i uklanjanje kartica unutar PaymentSheeta
@@ -68,6 +70,13 @@ Android emulator koristi `10.0.2.2` za pristup host računaru:
 
 ```powershell
 flutter run --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264 --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+Ako host mreža ne prosljeđuje HTTP odgovor prema `10.0.2.2`, koristi ADB reverse tunel:
+
+```powershell
+adb reverse tcp:5264 tcp:5264
+flutter run --dart-define=OPENAMP_API_URL=http://127.0.0.1:5264 --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 Za fizički Android uređaj oba uređaja moraju biti na istoj mreži, API mora slušati na dostupnoj adresi, a `OPENAMP_API_URL` treba sadržavati LAN IP računara.

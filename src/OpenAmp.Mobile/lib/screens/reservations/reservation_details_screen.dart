@@ -355,7 +355,7 @@ class _ReservationDetailsScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SectionEyebrow(
-                          'Session ticket',
+                          'Rezervacija',
                           color: AppColors.signal,
                         ),
                         const SizedBox(height: 14),

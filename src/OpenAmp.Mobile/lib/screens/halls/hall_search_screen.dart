@@ -83,19 +83,7 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 25),
-                      const SectionEyebrow(
-                        'Live room finder',
-                        color: AppColors.signal,
-                      ),
-                      const SizedBox(height: 9),
-                      Text(
-                        'Šta sviramo\nvečeras?',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.displaySmall?.copyWith(color: Colors.white),
-                      ),
-                      const SizedBox(height: 17),
+                      const SizedBox(height: 18),
                       TextField(
                         controller: _search,
                         textInputAction: TextInputAction.search,
@@ -208,19 +196,15 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const SectionEyebrow('Aktivni prostori'),
-                                const SizedBox(height: 7),
                                 Text(
-                                  _genre == null
-                                      ? 'Spremno za probu'
-                                      : 'U tvom žanru',
+                                  'Sale',
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
                               ],
                             ),
                           ),
                           Text(
-                            "${visibleHalls.length.toString().padLeft(2, '0')} ROOMS",
+                            '${visibleHalls.length} rezultata',
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 11,

@@ -19,13 +19,13 @@ class HallDetailsScreen extends ConsumerWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Room details')),
+              appBar: AppBar(title: const Text('Detalji sale')),
               body: const Center(child: CircularProgressIndicator()),
             );
           }
           if (snapshot.hasError) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Room details')),
+              appBar: AppBar(title: const Text('Detalji sale')),
               body: Padding(
                 padding: const EdgeInsets.all(20),
                 child: ErrorBanner(message: snapshot.error.toString()),
@@ -58,7 +58,7 @@ class _HallDetailsView extends ConsumerWidget {
             foregroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
             title: Text(
-              "ROOM / ${hall.id.toString().padLeft(2, '0')}",
+              "SALA / ${hall.id.toString().padLeft(2, '0')}",
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
@@ -171,7 +171,7 @@ class _HallDetailsView extends ConsumerWidget {
                 ),
                 if (hall.description != null) ...[
                   const SizedBox(height: 28),
-                  const SectionEyebrow('Room notes'),
+                  const SectionEyebrow('Opis'),
                   const SizedBox(height: 9),
                   Text(
                     'O prostoru',
@@ -208,7 +208,7 @@ class _HallDetailsView extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'ACOUSTIC NOTES',
+                                'AKUSTIKA',
                                 style: TextStyle(
                                   color: AppColors.signal,
                                   fontSize: 9,
@@ -239,7 +239,7 @@ class _HallDetailsView extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SectionEyebrow('Signal chain'),
+                          const SectionEyebrow('Oprema'),
                           const SizedBox(height: 8),
                           Text(
                             'Oprema u prostoru',
@@ -249,7 +249,7 @@ class _HallDetailsView extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      "${hall.equipment.length.toString().padLeft(2, '0')} ITEMS",
+                      '${hall.equipment.length} stavke',
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 10,
@@ -265,7 +265,7 @@ class _HallDetailsView extends ConsumerWidget {
                 ),
                 if (hall.reviews.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  const SectionEyebrow('From the bands'),
+                  const SectionEyebrow('Recenzije'),
                   const SizedBox(height: 8),
                   Text(
                     'Šta kažu muzičari',

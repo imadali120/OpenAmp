@@ -3,38 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 
-class OpenAmpMark extends StatelessWidget {
-  const OpenAmpMark({super.key, this.size = 44, this.onDark = false});
-
-  final double size;
-  final bool onDark;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      color: onDark ? AppColors.paper : Colors.white,
-      borderRadius: BorderRadius.circular(size * .25),
-      border: Border.all(
-        color: onDark ? Colors.white24 : AppColors.ink,
-        width: 1.2,
-      ),
-    ),
-    child: ClipRect(
-      child: Transform.scale(
-        scale: 1.62,
-        child: Image.asset(
-          'assets/branding/openamp-mark.png',
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.high,
-        ),
-      ),
-    ),
-  );
-}
-
 class OpenAmpLogo extends StatelessWidget {
   const OpenAmpLogo({super.key, this.compact = false, this.onDark = false});
 
@@ -42,32 +10,25 @@ class OpenAmpLogo extends StatelessWidget {
   final bool onDark;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      OpenAmpMark(size: compact ? 34 : 48, onDark: onDark),
-      SizedBox(width: compact ? 9 : 12),
-      Text.rich(
+  Widget build(BuildContext context) => Text.rich(
+    TextSpan(
+      children: [
+        const TextSpan(text: 'Open'),
         TextSpan(
-          children: [
-            const TextSpan(text: 'Open'),
-            TextSpan(
-              text: 'Amp',
-              style: TextStyle(
-                color: onDark ? AppColors.signal : AppColors.primary,
-              ),
-            ),
-          ],
+          text: 'Amp',
+          style: TextStyle(
+            color: onDark ? AppColors.signal : AppColors.primary,
+          ),
         ),
-        style: TextStyle(
-          color: onDark ? Colors.white : AppColors.ink,
-          fontSize: compact ? 19 : 28,
-          height: 1,
-          fontWeight: FontWeight.w900,
-          letterSpacing: compact ? -0.7 : -1.2,
-        ),
-      ),
-    ],
+      ],
+    ),
+    style: TextStyle(
+      color: onDark ? Colors.white : AppColors.ink,
+      fontSize: compact ? 21 : 29,
+      height: 1,
+      fontWeight: FontWeight.w900,
+      letterSpacing: compact ? -0.8 : -1.2,
+    ),
   );
 }
 

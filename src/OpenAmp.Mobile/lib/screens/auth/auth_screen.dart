@@ -66,7 +66,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 28),
+                padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
                 decoration: const BoxDecoration(
                   color: AppColors.ink,
                   borderRadius: BorderRadius.only(
@@ -76,30 +76,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const OpenAmpLogo(onDark: true),
-                    const SizedBox(height: 34),
-                    const SectionEyebrow(
-                      'Rehearsal booking, bez šuma',
-                      color: AppColors.signal,
-                    ),
-                    const SizedBox(height: 13),
-                    Text(
-                      'Pojačaj probu.\nNe komplikuj termin.',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.displaySmall?.copyWith(color: Colors.white),
-                    ),
-                    const SizedBox(height: 13),
-                    const Text(
-                      'Sala, oprema i bend na jednom mjestu — tačno kad vam treba.',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+                  children: [const OpenAmpLogo(onDark: true)],
                 ),
               ),
               Padding(
@@ -116,19 +93,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           onChanged: _setRegister,
                         ),
                         const SizedBox(height: 26),
-                        const SectionEyebrow('Member access'),
-                        const SizedBox(height: 9),
                         Text(
-                          _register
-                              ? 'Novi član postave'
-                              : 'Vrati bend u ritam',
+                          _register ? 'Registracija' : 'Prijava',
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _register
-                              ? 'Kreiraj profil i rezerviši prvi termin.'
-                              : 'Unesi podatke i nastavi gdje ste stali.',
+                              ? 'Unesi podatke za novi korisnički račun.'
+                              : 'Unesi email i lozinku.',
                         ),
                         const SizedBox(height: 20),
                         if (state.error != null)
@@ -226,21 +199,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         ),
                         const SizedBox(height: 16),
                         SignalButton(
-                          label: _register ? 'Kreiraj profil' : 'Uđi u OpenAmp',
+                          label: _register ? 'Kreiraj račun' : 'Prijavi se',
                           onPressed: _submit,
                           loading: state.busy,
                         ),
                         const SizedBox(height: 13),
-                        Text(
-                          _register
-                              ? 'Registracijom prihvataš pravila korištenja platforme.'
-                              : 'Tvoj sljedeći termin je bliže nego što misliš.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 11,
+                        if (_register)
+                          const Text(
+                            'Registracijom prihvataš pravila korištenja platforme.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 11,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),

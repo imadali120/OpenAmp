@@ -3,23 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:openamp_mobile/widgets/common.dart';
 
 void main() {
-  testWidgets('OpenAmp logo renders generated brand mark and name', (
-    tester,
-  ) async {
+  testWidgets('OpenAmp logo renders the wordmark', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: OpenAmpLogo())),
     );
 
     expect(find.text('OpenAmp'), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName ==
-                'assets/branding/openamp-mark.png',
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(Image), findsNothing);
   });
 }

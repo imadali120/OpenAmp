@@ -419,7 +419,7 @@ class _PricePreview extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'ROOM SUBTOTAL',
+                      'CIJENA SALE',
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 9,

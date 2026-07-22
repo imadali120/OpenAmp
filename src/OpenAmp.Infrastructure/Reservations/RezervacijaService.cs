@@ -195,7 +195,14 @@ public sealed class RezervacijaService(
             throw new NedozvoljenaOperacijaException("Nije moguće otkazati rezervaciju čiji je termin počeo.");
         }
 
-        dbContext.Entry(rezervacija).Property(x => x.RowVersion).OriginalValue = DekodirajRowVersion(zahtjev.RowVersion);
+        var ocekivanaVerzija = DekodirajRowVersion(zahtjev.RowVersion);
+        if (!rezervacija.RowVersion.AsSpan().SequenceEqual(ocekivanaVerzija))
+        {
+            throw new KonfliktKonkurentnostiException(
+                "Rezervaciju je u međuvremenu izmijenio drugi korisnik.");
+        }
+
+        dbContext.Entry(rezervacija).Property(x => x.RowVersion).OriginalValue = ocekivanaVerzija;
         var refundIznos = IzracunajRefund(rezervacija, sadaUtc);
         string? refundId = null;
         if (rezervacija.StripePaymentIntentId is not null)

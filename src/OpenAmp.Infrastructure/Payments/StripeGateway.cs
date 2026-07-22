@@ -155,13 +155,32 @@ public sealed class StripeGateway(IOptions<StripeOptions> options) : IStripeGate
         string paymentIntentId,
         CancellationToken cancellationToken = default)
     {
+        var service = new PaymentIntentService(KreirajClient());
         try
         {
-            var service = new PaymentIntentService(KreirajClient());
+            var intent = await service.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
+            if (string.Equals(intent.Status, "canceled", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             await service.CancelAsync(paymentIntentId, cancellationToken: cancellationToken);
         }
         catch (StripeException exception)
         {
+            try
+            {
+                var intent = await service.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
+                if (string.Equals(intent.Status, "canceled", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+            catch (StripeException)
+            {
+                // Zadržava se originalna greška otkazivanja radi tačne dijagnostike.
+            }
+
             throw new PaymentProviderException("Stripe otkazivanje PaymentIntenta nije uspjelo.", exception);
         }
     }
