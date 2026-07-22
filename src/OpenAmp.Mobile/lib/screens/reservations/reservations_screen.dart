@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 import 'package:openamp_mobile/models/models.dart';
+import 'package:openamp_mobile/screens/reservations/reservation_details_screen.dart';
 import 'package:openamp_mobile/state/app_state.dart';
 import 'package:openamp_mobile/widgets/common.dart';
 
@@ -103,8 +104,15 @@ class _ReservationList extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: 13),
-      itemBuilder: (_, index) =>
-          _ReservationTicket(item: items[index], index: index),
+      itemBuilder: (context, index) => InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.large),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ReservationDetailsScreen(reservation: items[index]),
+          ),
+        ),
+        child: _ReservationTicket(item: items[index], index: index),
+      ),
     );
   }
 }

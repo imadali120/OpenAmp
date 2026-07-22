@@ -7,6 +7,7 @@ Repozitorij sadrži:
 - FAZU 1: SQL Server bazu, EF Core model, migracije i seed podatke
 - FAZU 2: REST API, JWT autentikaciju, logiku rezervacija i Stripe plaćanje
 - FAZU 3: Flutter mobilnu aplikaciju za Android i iOS
+- FAZU 3.1: kompletiranje mobilnih rezervacija, profila, bendova, recenzija i Stripe lifecyclea
 
 ## Implementirano
 
@@ -17,7 +18,10 @@ Repozitorij sadrži:
 - Stripe Payment Intents, potpisani webhook i automatski refund
 - Flutter aplikacija sa Riverpod state managementom i Dio API klijentom
 - pretraga i detalji sala, satni slotovi, oprema, artikli i Stripe PaymentSheet
-- upravljanje bendovima i pozivnicama, historija proba i profil
+- upravljanje bendovima, članovima i pozivnicama, historija proba i profil
+- izmjena/otkazivanje termina, refund pregled, recenzije i ponovno rezervisanje
+- trajno sačuvane sale, navigacija do studija i korisničke postavke
+- Stripe Customer Session za sačuvane kartice i oporavak napuštenog checkouta
 - Swagger/OpenAPI, health endpoint i testovi
 - Mermaid [ERD](docs/erd.md)
 

@@ -54,11 +54,13 @@ builder.Services.AddScoped<ICommandHandler<LoginCommand, AuthResponseDto>, Login
 builder.Services.AddScoped<ICommandHandler<RefreshTokenCommand, AuthResponseDto>, RefreshTokenCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<DohvatiKorisnikaQuery, KorisnikDto>, DohvatiKorisnikaQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<AzurirajProfilCommand, KorisnikDto>, AzurirajProfilCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<PromijeniLozinkuCommand, bool>, PromijeniLozinkuCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<KreirajRezervacijuCommand, RezervacijaDto>, KreirajRezervacijuCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<IzmijeniRezervacijuCommand, RezervacijaDto>, IzmijeniRezervacijuCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<OtkaziRezervacijuCommand, OtkazivanjeRezultatDto>, OtkaziRezervacijuCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<DohvatiRezervacijuQuery, RezervacijaDto>, DohvatiRezervacijuQueryHandler>();
 builder.Services.AddScoped<IQueryHandler<DohvatiSlobodneTermineQuery, IReadOnlyCollection<SlobodanTerminDto>>, DohvatiSlobodneTermineQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiOtkazivanjePregledQuery, OtkazivanjePregledDto>, DohvatiOtkazivanjePregledQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<KreirajPaymentIntentCommand, PaymentIntentDto>, KreirajPaymentIntentCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<ObradiStripeWebhookCommand, bool>, ObradiStripeWebhookCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<PretraziSaleQuery, IReadOnlyCollection<SalaCardDto>>, PretraziSaleQueryHandler>();
@@ -67,8 +69,18 @@ builder.Services.AddScoped<IQueryHandler<DohvatiMobileSifarnikeQuery, MobileLook
 builder.Services.AddScoped<IQueryHandler<DohvatiMojeBendoveQuery, IReadOnlyCollection<BendDto>>, DohvatiMojeBendoveQueryHandler>();
 builder.Services.AddScoped<ICommandHandler<KreirajBendCommand, BendDto>, KreirajBendCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<PosaljiPozivnicuBendaCommand, PozivnicaBendaDto>, PosaljiPozivnicuBendaCommandHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiPrimljenePozivniceQuery, IReadOnlyCollection<PrimljenaPozivnicaBendaDto>>, DohvatiPrimljenePozivniceQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<OdgovoriNaPozivnicuBendaCommand, PrimljenaPozivnicaBendaDto>, OdgovoriNaPozivnicuBendaCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<AzurirajBendCommand, BendDto>, AzurirajBendCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<AzurirajClanaBendaCommand, BendDto>, AzurirajClanaBendaCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<UkloniClanaBendaCommand, BendDto>, UkloniClanaBendaCommandHandler>();
 builder.Services.AddScoped<IQueryHandler<DohvatiMojeRezervacijeQuery, IReadOnlyCollection<MobileRezervacijaDto>>, DohvatiMojeRezervacijeQueryHandler>();
 builder.Services.AddScoped<IQueryHandler<DohvatiProfilPregledQuery, ProfilPregledDto>, DohvatiProfilPregledQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiOmiljeneSaleQuery, IReadOnlyCollection<int>>, DohvatiOmiljeneSaleQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<PostaviOmiljenuSaluCommand, bool>, PostaviOmiljenuSaluCommandHandler>();
+builder.Services.AddScoped<IQueryHandler<DohvatiKorisnickePostavkeQuery, KorisnickePostavkeDto>, DohvatiKorisnickePostavkeQueryHandler>();
+builder.Services.AddScoped<ICommandHandler<AzurirajKorisnickePostavkeCommand, KorisnickePostavkeDto>, AzurirajKorisnickePostavkeCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<KreirajRecenzijuCommand, RecenzijaSaleDto>, KreirajRecenzijuCommandHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();

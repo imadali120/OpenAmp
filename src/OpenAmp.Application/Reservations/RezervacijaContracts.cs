@@ -24,6 +24,7 @@ public sealed record RezervacijaDto(
     DateTime TerminDoUtc,
     decimal UkupnaCijena,
     string Status,
+    string StatusKod,
     string? Napomena,
     string RowVersion,
     IReadOnlyCollection<StavkaRezervacijeDto> Stavke);
@@ -34,6 +35,12 @@ public sealed record OtkazivanjeRezultatDto(
     RezervacijaDto Rezervacija,
     decimal RefundiraniIznos,
     string? StripeRefundId);
+
+public sealed record OtkazivanjePregledDto(
+    decimal MoguciPovrat,
+    int PuniPovratDoSati,
+    int DjelimicniPovratDoSati,
+    int DjelimicniPovratPostotak);
 
 public sealed record KreirajRezervacijuCommand(
     int KorisnikId,
@@ -66,6 +73,9 @@ public sealed record DohvatiSlobodneTermineQuery(
     int TrajanjeMinuta,
     int KorakMinuta = 30) : IQuery<IReadOnlyCollection<SlobodanTerminDto>>;
 
+public sealed record DohvatiOtkazivanjePregledQuery(int RezervacijaId, int KorisnikId)
+    : IQuery<OtkazivanjePregledDto>;
+
 public interface IRezervacijaService
 {
     Task<RezervacijaDto> KreirajAsync(
@@ -87,6 +97,11 @@ public interface IRezervacijaService
 
     Task<IReadOnlyCollection<SlobodanTerminDto>> DohvatiSlobodneTermineAsync(
         DohvatiSlobodneTermineQuery upit,
+        CancellationToken cancellationToken = default);
+
+    Task<OtkazivanjePregledDto> DohvatiOtkazivanjePregledAsync(
+        int rezervacijaId,
+        int korisnikId,
         CancellationToken cancellationToken = default);
 }
 

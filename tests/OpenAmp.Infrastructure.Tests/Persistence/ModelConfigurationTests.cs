@@ -64,6 +64,40 @@ public sealed class ModelConfigurationTests
         Assert.Equal([nameof(StripeWebhookDogadjaj.Id)], key?.Properties.Select(x => x.Name).ToArray());
     }
 
+    [Fact]
+    public void OmiljenaSalaImaKompozitniPrimarniKljuc()
+    {
+        using var context = KreirajSqlServerContext();
+        var key = context.Model.FindEntityType(typeof(OmiljenaSala))?.FindPrimaryKey();
+
+        Assert.Equal(
+            [nameof(OmiljenaSala.KorisnikId), nameof(OmiljenaSala.SalaId)],
+            key?.Properties.Select(x => x.Name).ToArray());
+    }
+
+    [Fact]
+    public void PostavkeKorisnikaSuJedanNaJedanSaKorisnikom()
+    {
+        using var context = KreirajSqlServerContext();
+        var entity = context.Model.FindEntityType(typeof(PostavkeKorisnika));
+        var foreignKey = entity?.GetForeignKeys().Single();
+
+        Assert.True(foreignKey?.IsUnique);
+        Assert.Equal(nameof(PostavkeKorisnika.KorisnikId), foreignKey?.Properties.Single().Name);
+    }
+
+    [Fact]
+    public void StripeCustomerIdJeJedinstvenKadaPostoji()
+    {
+        using var context = KreirajSqlServerContext();
+        var entity = context.Model.FindEntityType(typeof(Korisnik));
+        var index = entity?.GetIndexes().Single(x =>
+            x.Properties.Select(p => p.Name).SequenceEqual([nameof(Korisnik.StripeCustomerId)]));
+
+        Assert.True(index?.IsUnique);
+        Assert.Equal("[StripeCustomerId] IS NOT NULL", index?.GetFilter());
+    }
+
     private static OpenAmpDbContext KreirajSqlServerContext()
     {
         var options = new DbContextOptionsBuilder<OpenAmpDbContext>()

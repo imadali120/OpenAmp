@@ -9,7 +9,9 @@ public sealed record KorisnikDto(
     string Prezime,
     string Email,
     string? Telefon,
-    string Uloga);
+    string Uloga,
+    string? FotografijaUrl,
+    IReadOnlyCollection<int> InstrumentIds);
 
 public sealed record AuthResponseDto(
     string AccessToken,
@@ -41,7 +43,14 @@ public sealed record AzurirajProfilCommand(
     int KorisnikId,
     string Ime,
     string Prezime,
-    string? Telefon) : ICommand<KorisnikDto>;
+    string? Telefon,
+    string? FotografijaUrl,
+    IReadOnlyCollection<int> InstrumentIds) : ICommand<KorisnikDto>;
+
+public sealed record PromijeniLozinkuCommand(
+    int KorisnikId,
+    string TrenutnaLozinka,
+    string NovaLozinka) : ICommand<bool>;
 
 public sealed record AccessTokenResult(string Token, DateTime IsticeUtc);
 
@@ -54,6 +63,9 @@ public interface IKorisnikRepository
     Task<Korisnik?> DohvatiPoIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Korisnik?> DohvatiPoRefreshTokenHashuAsync(string tokenHash, CancellationToken cancellationToken = default);
     Task<Uloga> DohvatiUloguMuzicaraAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<Instrument>> DohvatiInstrumenteAsync(
+        IReadOnlyCollection<int> ids,
+        CancellationToken cancellationToken = default);
     Task DodajAsync(Korisnik korisnik, CancellationToken cancellationToken = default);
 }
 

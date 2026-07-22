@@ -9,6 +9,7 @@ public sealed class Korisnik
     public string PasswordHash { get; set; } = string.Empty;
     public string? Telefon { get; set; }
     public string? FotografijaUrl { get; set; }
+    public string? StripeCustomerId { get; set; }
     public bool Aktivan { get; set; } = true;
     public DateTime KreiranUtc { get; set; }
     public int UlogaId { get; set; }
@@ -20,8 +21,30 @@ public sealed class Korisnik
     public ICollection<PozivnicaBenda> PrimljenePozivnice { get; set; } = [];
     public ICollection<Rezervacija> KreiraneRezervacije { get; set; } = [];
     public ICollection<Recenzija> Recenzije { get; set; } = [];
+    public ICollection<OmiljenaSala> OmiljeneSale { get; set; } = [];
+    public PostavkeKorisnika? Postavke { get; set; }
     public ICollection<Studio> Studiji { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokeni { get; set; } = [];
+}
+
+public sealed class PostavkeKorisnika
+{
+    public int KorisnikId { get; set; }
+    public Korisnik Korisnik { get; set; } = null!;
+    public bool PushNotifikacije { get; set; } = true;
+    public bool EmailNotifikacije { get; set; } = true;
+    public string Jezik { get; set; } = "bs";
+    public bool ProfilJavan { get; set; } = true;
+    public DateTime AzuriraneUtc { get; set; }
+}
+
+public sealed class OmiljenaSala
+{
+    public int KorisnikId { get; set; }
+    public Korisnik Korisnik { get; set; } = null!;
+    public int SalaId { get; set; }
+    public Sala Sala { get; set; } = null!;
+    public DateTime KreiranaUtc { get; set; }
 }
 
 public sealed class RefreshToken

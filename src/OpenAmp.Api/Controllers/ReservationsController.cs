@@ -15,9 +15,11 @@ public sealed class ReservationsController(
     ICommandHandler<KreirajRezervacijuCommand, RezervacijaDto> createHandler,
     ICommandHandler<IzmijeniRezervacijuCommand, RezervacijaDto> updateHandler,
     ICommandHandler<OtkaziRezervacijuCommand, OtkazivanjeRezultatDto> cancelHandler,
+    ICommandHandler<KreirajRecenzijuCommand, RecenzijaSaleDto> reviewHandler,
     IQueryHandler<DohvatiRezervacijuQuery, RezervacijaDto> getHandler,
     IQueryHandler<DohvatiMojeRezervacijeQuery, IReadOnlyCollection<MobileRezervacijaDto>> historyHandler,
-    IQueryHandler<DohvatiSlobodneTermineQuery, IReadOnlyCollection<SlobodanTerminDto>> availabilityHandler)
+    IQueryHandler<DohvatiSlobodneTermineQuery, IReadOnlyCollection<SlobodanTerminDto>> availabilityHandler,
+    IQueryHandler<DohvatiOtkazivanjePregledQuery, OtkazivanjePregledDto> cancellationPreviewHandler)
     : ControllerBase
 {
     [HttpGet("mine")]
@@ -39,6 +41,14 @@ public sealed class ReservationsController(
     [HttpGet("{id:int}")]
     public Task<RezervacijaDto> Get(int id, CancellationToken cancellationToken) =>
         getHandler.HandleAsync(new DohvatiRezervacijuQuery(id, User.KorisnikId()), cancellationToken);
+
+    [HttpGet("{id:int}/cancellation-preview")]
+    public Task<OtkazivanjePregledDto> CancellationPreview(
+        int id,
+        CancellationToken cancellationToken) =>
+        cancellationPreviewHandler.HandleAsync(
+            new DohvatiOtkazivanjePregledQuery(id, User.KorisnikId()),
+            cancellationToken);
 
     [HttpPost]
     [ProducesResponseType<RezervacijaDto>(StatusCodes.Status201Created)]
@@ -78,4 +88,17 @@ public sealed class ReservationsController(
         cancelHandler.HandleAsync(
             new OtkaziRezervacijuCommand(id, User.KorisnikId(), request.RowVersion, request.Razlog),
             cancellationToken);
+
+    [HttpPost("{id:int}/review")]
+    [ProducesResponseType<RecenzijaSaleDto>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<RecenzijaSaleDto>> Review(
+        int id,
+        CreateReviewRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await reviewHandler.HandleAsync(
+            new KreirajRecenzijuCommand(User.KorisnikId(), id, request.Ocjena, request.Komentar),
+            cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, result);
+    }
 }

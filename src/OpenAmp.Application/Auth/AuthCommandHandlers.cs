@@ -71,7 +71,9 @@ public sealed class RegisterCommandHandler(
                 korisnik.Prezime,
                 korisnik.Email,
                 korisnik.Telefon,
-                korisnik.Uloga.Naziv));
+                korisnik.Uloga.Naziv,
+                korisnik.FotografijaUrl,
+                korisnik.Instrumenti.Select(x => x.InstrumentId).ToArray()));
 }
 
 public sealed class LoginCommandHandler(
@@ -160,7 +162,9 @@ public sealed class DohvatiKorisnikaQueryHandler(IKorisnikRepository korisnikRep
         korisnik.Prezime,
         korisnik.Email,
         korisnik.Telefon,
-        korisnik.Uloga.Naziv);
+        korisnik.Uloga.Naziv,
+        korisnik.FotografijaUrl,
+        korisnik.Instrumenti.Select(x => x.InstrumentId).ToArray());
 }
 
 public sealed class AzurirajProfilCommandHandler(
@@ -176,7 +180,56 @@ public sealed class AzurirajProfilCommandHandler(
         korisnik.Ime = command.Ime.Trim();
         korisnik.Prezime = command.Prezime.Trim();
         korisnik.Telefon = command.Telefon?.Trim();
+        korisnik.FotografijaUrl = string.IsNullOrWhiteSpace(command.FotografijaUrl)
+            ? null
+            : command.FotografijaUrl.Trim();
+
+        var instrumentIds = command.InstrumentIds.Distinct().ToArray();
+        var instrumenti = await korisnikRepository.DohvatiInstrumenteAsync(instrumentIds, cancellationToken);
+        if (instrumenti.Count != instrumentIds.Length)
+        {
+            throw new ArgumentException("Jedan ili više odabranih instrumenata ne postoje.");
+        }
+
+        korisnik.Instrumenti.Clear();
+        foreach (var instrument in instrumenti)
+        {
+            korisnik.Instrumenti.Add(new KorisnikInstrument
+            {
+                KorisnikId = korisnik.Id,
+                InstrumentId = instrument.Id,
+                Instrument = instrument,
+                Primarni = instrument.Id == instrumentIds.FirstOrDefault()
+            });
+        }
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return DohvatiKorisnikaQueryHandler.Mapiraj(korisnik);
+    }
+}
+
+public sealed class PromijeniLozinkuCommandHandler(
+    IKorisnikRepository korisnikRepository,
+    IPasswordHasher passwordHasher,
+    IUnitOfWork unitOfWork) : ICommandHandler<PromijeniLozinkuCommand, bool>
+{
+    public async Task<bool> HandleAsync(
+        PromijeniLozinkuCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var korisnik = await korisnikRepository.DohvatiPoIdAsync(command.KorisnikId, cancellationToken)
+            ?? throw new KorisnikNijePronadjenException();
+        if (!passwordHasher.Verify(command.TrenutnaLozinka, korisnik.PasswordHash))
+        {
+            throw new NeispravniPodaciZaPrijavuException();
+        }
+
+        if (command.NovaLozinka.Length is < 10 or > 128)
+        {
+            throw new ArgumentException("Nova lozinka mora imati između 10 i 128 znakova.");
+        }
+
+        korisnik.PasswordHash = passwordHasher.Hash(command.NovaLozinka);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

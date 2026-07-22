@@ -9,9 +9,11 @@ Flutter aplikacija za muzičare, razvijena prema mockupima iz poglavlja 4.2 proj
 - detalji sale, galerija, oprema, artikli i recenzije
 - izbor benda, datuma i uzastopnih satnih slotova
 - trenutna kalkulacija sale, opreme i artikala
-- Stripe PaymentSheet i 3D Secure
-- pregled bendova, članova i pozivnica
-- historija rezervacija i statistike profila
+- Stripe PaymentSheet, 3D Secure i sačuvane kartice preko Stripe Customer Sessiona
+- slanje, prihvatanje i odbijanje pozivnica te upravljanje članovima benda
+- detalj, izmjena, otkazivanje/refund i ponovna rezervacija termina
+- recenzija nakon probe, trajno sačuvane sale i navigacija do studija
+- uređivanje profila, instrumenata, postavki i lozinke
 
 ## Pokretanje
 

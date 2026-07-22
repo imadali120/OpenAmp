@@ -5,6 +5,7 @@ import 'package:openamp_mobile/models/models.dart';
 import 'package:openamp_mobile/screens/booking/slot_selection_screen.dart';
 import 'package:openamp_mobile/state/app_state.dart';
 import 'package:openamp_mobile/widgets/common.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HallDetailsScreen extends ConsumerWidget {
   const HallDetailsScreen({super.key, required this.hallId});
@@ -36,237 +37,280 @@ class HallDetailsScreen extends ConsumerWidget {
       );
 }
 
-class _HallDetailsView extends StatelessWidget {
+class _HallDetailsView extends ConsumerWidget {
   const _HallDetailsView({required this.hall});
 
   final HallDetails hall;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          expandedHeight: 296,
-          backgroundColor: AppColors.ink,
-          foregroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          title: Text(
-            "ROOM / ${hall.id.toString().padLeft(2, '0')}",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.1,
-            ),
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Sačuvaj',
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sala je dodana u omiljene.')),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref
+        .watch(appControllerProvider)
+        .favoriteHallIds
+        .contains(hall.id);
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 296,
+            backgroundColor: AppColors.ink,
+            foregroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            title: Text(
+              "ROOM / ${hall.id.toString().padLeft(2, '0')}",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.1,
               ),
-              icon: const Icon(Icons.favorite_border_rounded),
             ),
-            const SizedBox(width: 6),
-          ],
-          flexibleSpace: FlexibleSpaceBar(
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                PageView.builder(
-                  itemCount: hall.gallery.isEmpty ? 1 : hall.gallery.length,
-                  itemBuilder: (_, index) => HallImage(
-                    url: hall.gallery.isEmpty ? null : hall.gallery[index],
-                    height: 296,
-                    borderRadius: 0,
-                  ),
+            actions: [
+              IconButton(
+                tooltip: saved ? 'Ukloni iz omiljenih' : 'Sačuvaj',
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(appControllerProvider.notifier)
+                        .setFavoriteHall(hall.id, !saved);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            saved
+                                ? 'Sala je uklonjena iz omiljenih.'
+                                : 'Sala je sačuvana u omiljene.',
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (_) {}
+                },
+                icon: Icon(
+                  saved
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: saved ? AppColors.signal : Colors.white,
                 ),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black26,
-                        Colors.transparent,
-                        Colors.black87,
-                      ],
-                      stops: [0, .5, 1],
+              ),
+              const SizedBox(width: 6),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  PageView.builder(
+                    itemCount: hall.gallery.isEmpty ? 1 : hall.gallery.length,
+                    itemBuilder: (_, index) => HallImage(
+                      url: hall.gallery.isEmpty ? null : hall.gallery[index],
+                      height: 296,
+                      borderRadius: 0,
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 22,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${hall.studio} / ${hall.city}'.toUpperCase(),
-                        style: const TextStyle(
-                          color: AppColors.signal,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.1,
-                        ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black26,
+                          Colors.transparent,
+                          Colors.black87,
+                        ],
+                        stops: [0, .5, 1],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        hall.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 29,
-                          height: 1,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 20, 18, 126),
-          sliver: SliverList.list(
-            children: [
-              _SpecStrip(hall: hall),
-              if (hall.description != null) ...[
-                const SizedBox(height: 28),
-                const SectionEyebrow('Room notes'),
-                const SizedBox(height: 9),
-                Text(
-                  'O prostoru',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 9),
-                Text(
-                  hall.description!,
-                  style: const TextStyle(
-                    color: AppColors.inkSoft,
-                    fontSize: 15,
-                    height: 1.55,
-                  ),
-                ),
-              ],
-              if (hall.acoustics != null) ...[
-                const SizedBox(height: 17),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.ink,
-                    borderRadius: BorderRadius.circular(AppRadii.medium),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.graphic_eq_rounded,
-                        color: AppColors.signal,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'ACOUSTIC NOTES',
-                              style: TextStyle(
-                                color: AppColors.signal,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              hall.acoustics!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 29),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 22,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SectionEyebrow('Signal chain'),
-                        const SizedBox(height: 8),
                         Text(
-                          'Oprema u prostoru',
-                          style: Theme.of(context).textTheme.titleLarge,
+                          '${hall.studio} / ${hall.city}'.toUpperCase(),
+                          style: const TextStyle(
+                            color: AppColors.signal,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          hall.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 29,
+                            height: 1,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                  Text(
-                    "${hall.equipment.length.toString().padLeft(2, '0')} ITEMS",
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 11),
-              ...hall.equipment.indexed.map(
-                (entry) => _EquipmentRow(index: entry.$1, item: entry.$2),
-              ),
-              if (hall.reviews.isNotEmpty) ...[
-                const SizedBox(height: 28),
-                const SectionEyebrow('From the bands'),
-                const SizedBox(height: 8),
-                Text(
-                  'Šta kažu muzičari',
-                  style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 126),
+            sliver: SliverList.list(
+              children: [
+                _SpecStrip(hall: hall),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: () => _openMap(hall),
+                  icon: const Icon(Icons.directions_outlined),
+                  label: Text('Navigacija do ${hall.studio}'),
+                ),
+                if (hall.description != null) ...[
+                  const SizedBox(height: 28),
+                  const SectionEyebrow('Room notes'),
+                  const SizedBox(height: 9),
+                  Text(
+                    'O prostoru',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 9),
+                  Text(
+                    hall.description!,
+                    style: const TextStyle(
+                      color: AppColors.inkSoft,
+                      fontSize: 15,
+                      height: 1.55,
+                    ),
+                  ),
+                ],
+                if (hall.acoustics != null) ...[
+                  const SizedBox(height: 17),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.ink,
+                      borderRadius: BorderRadius.circular(AppRadii.medium),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.graphic_eq_rounded,
+                          color: AppColors.signal,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'ACOUSTIC NOTES',
+                                style: TextStyle(
+                                  color: AppColors.signal,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                hall.acoustics!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 29),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SectionEyebrow('Signal chain'),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Oprema u prostoru',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      "${hall.equipment.length.toString().padLeft(2, '0')} ITEMS",
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 11),
-                ...hall.reviews
-                    .take(3)
-                    .map((review) => _ReviewRow(review: review)),
+                ...hall.equipment.indexed.map(
+                  (entry) => _EquipmentRow(index: entry.$1, item: entry.$2),
+                ),
+                if (hall.reviews.isNotEmpty) ...[
+                  const SizedBox(height: 28),
+                  const SectionEyebrow('From the bands'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Šta kažu muzičari',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 11),
+                  ...hall.reviews
+                      .take(3)
+                      .map((review) => _ReviewRow(review: review)),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ],
-    ),
-    bottomNavigationBar: Container(
-      decoration: const BoxDecoration(
-        color: AppColors.canvas,
-        border: Border(top: BorderSide(color: AppColors.line)),
+        ],
       ),
-      child: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(18, 10, 18, 12),
-        child: SignalButton(
-          label: 'Rezerviši · ${money(hall.hourlyPrice)}/h',
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => SlotSelectionScreen(hall: hall),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.canvas,
+          border: Border(top: BorderSide(color: AppColors.line)),
+        ),
+        child: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+          child: SignalButton(
+            label: 'Rezerviši · ${money(hall.hourlyPrice)}/h',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SlotSelectionScreen(hall: hall),
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  Future<void> _openMap(HallDetails hall) async {
+    final query = hall.latitude != null && hall.longitude != null
+        ? '${hall.latitude},${hall.longitude}'
+        : '${hall.address}, ${hall.city}';
+    final uri = Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': query,
+    });
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 }
 
 class _SpecStrip extends StatelessWidget {

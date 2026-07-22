@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
+import 'package:openamp_mobile/models/models.dart';
 import 'package:openamp_mobile/state/app_state.dart';
 import 'package:openamp_mobile/widgets/common.dart';
 
@@ -67,19 +68,22 @@ class ProfileScreen extends ConsumerWidget {
                       Container(
                         width: 70,
                         height: 70,
+                        clipBehavior: Clip.antiAlias,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.signal,
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: Text(
-                          initials(profile.fullName),
-                          style: const TextStyle(
-                            color: AppColors.ink,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        child: profile.imageUrl == null
+                            ? _ProfileInitials(name: profile.fullName)
+                            : Image.network(
+                                profile.imageUrl!,
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    _ProfileInitials(name: profile.fullName),
+                              ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -213,21 +217,25 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 27),
             const SectionEyebrow('Postavke'),
             const SizedBox(height: 8),
-            const _ProfileAction(
+            _ProfileAction(
               icon: Icons.person_outline,
               label: 'Lični podaci',
+              onTap: () => _editProfile(context, ref),
             ),
-            const _ProfileAction(
+            _ProfileAction(
               icon: Icons.credit_card_outlined,
               label: 'Načini plaćanja',
+              onTap: () => _paymentMethodsInfo(context),
             ),
-            const _ProfileAction(
+            _ProfileAction(
               icon: Icons.notifications_none_rounded,
               label: 'Notifikacije',
+              onTap: () => _editSettings(context, ref),
             ),
-            const _ProfileAction(
+            _ProfileAction(
               icon: Icons.lock_outline_rounded,
               label: 'Sigurnost i lozinka',
+              onTap: () => _changePassword(context, ref),
             ),
             const SizedBox(height: 18),
             OutlinedButton.icon(
@@ -240,6 +248,287 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _editProfile(BuildContext context, WidgetRef ref) async {
+    final state = ref.read(appControllerProvider);
+    final profile = state.profile!;
+    final firstName = TextEditingController(text: profile.firstName);
+    final lastName = TextEditingController(text: profile.lastName);
+    final phone = TextEditingController(text: profile.phone);
+    final imageUrl = TextEditingController(text: profile.imageUrl);
+    final selected =
+        state.lookups?.instruments
+            .where((item) => profile.instruments.contains(item.name))
+            .map((item) => item.id)
+            .toSet() ??
+        <int>{};
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Lični podaci'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: firstName,
+                  decoration: const InputDecoration(labelText: 'Ime'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: lastName,
+                  decoration: const InputDecoration(labelText: 'Prezime'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: phone,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Telefon'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: imageUrl,
+                  keyboardType: TextInputType.url,
+                  decoration: const InputDecoration(
+                    labelText: 'URL profilne fotografije',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Instrumenti',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: (state.lookups?.instruments ?? [])
+                      .map(
+                        (item) => FilterChip(
+                          label: Text(item.name),
+                          selected: selected.contains(item.id),
+                          onSelected: (value) => setDialogState(
+                            () => value
+                                ? selected.add(item.id)
+                                : selected.remove(item.id),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Odustani'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sačuvaj'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (accepted != true ||
+        firstName.text.trim().length < 2 ||
+        lastName.text.trim().length < 2) {
+      return;
+    }
+    try {
+      await ref
+          .read(appControllerProvider.notifier)
+          .updateProfile(
+            firstName: firstName.text.trim(),
+            lastName: lastName.text.trim(),
+            phone: phone.text.trim().isEmpty ? null : phone.text.trim(),
+            imageUrl: imageUrl.text.trim().isEmpty
+                ? null
+                : imageUrl.text.trim(),
+            instrumentIds: selected.toList(),
+          );
+    } catch (_) {}
+  }
+
+  Future<void> _editSettings(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(appControllerProvider).settings;
+    if (current == null) return;
+    var push = current.pushNotifications;
+    var email = current.emailNotifications;
+    var publicProfile = current.publicProfile;
+    var language = current.language;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Postavke profila'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SwitchListTile(
+                value: push,
+                onChanged: (value) => setDialogState(() => push = value),
+                title: const Text('Push notifikacije'),
+                subtitle: const Text('Podsjetnici za probe i pozivnice'),
+              ),
+              SwitchListTile(
+                value: email,
+                onChanged: (value) => setDialogState(() => email = value),
+                title: const Text('Email notifikacije'),
+              ),
+              SwitchListTile(
+                value: publicProfile,
+                onChanged: (value) =>
+                    setDialogState(() => publicProfile = value),
+                title: const Text('Javan profil'),
+              ),
+              DropdownButtonFormField<String>(
+                initialValue: language,
+                decoration: const InputDecoration(labelText: 'Jezik'),
+                items: const [
+                  DropdownMenuItem(value: 'bs', child: Text('Bosanski')),
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                ],
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => language = value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Odustani'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sačuvaj'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (accepted == true) {
+      try {
+        await ref
+            .read(appControllerProvider.notifier)
+            .updateSettings(
+              UserSettings(
+                pushNotifications: push,
+                emailNotifications: email,
+                language: language,
+                publicProfile: publicProfile,
+              ),
+            );
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _changePassword(BuildContext context, WidgetRef ref) async {
+    final current = TextEditingController();
+    final next = TextEditingController();
+    final confirm = TextEditingController();
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Promijeni lozinku'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: current,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Trenutna lozinka'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: next,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Nova lozinka'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: confirm,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Ponovi novu lozinku',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Odustani'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Promijeni'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true) return;
+    if (next.text != confirm.text || next.text.length < 10) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nove lozinke se ne podudaraju ili su prekratke.'),
+          ),
+        );
+      }
+      return;
+    }
+    try {
+      await ref
+          .read(appControllerProvider.notifier)
+          .changePassword(current.text, next.text);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lozinka je promijenjena.')),
+        );
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _paymentMethodsInfo(BuildContext context) => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      icon: const Icon(Icons.credit_card_rounded, size: 46),
+      title: const Text('Sačuvane kartice'),
+      content: const Text(
+        'Kartice se sigurno čuvaju kod Stripea, ne u OpenAmp bazi. Tokom sljedećeg plaćanja možeš sačuvati novu ili ukloniti postojeću karticu direktno u Stripe PaymentSheetu.',
+        textAlign: TextAlign.center,
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('U redu'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ProfileInitials extends StatelessWidget {
+  const _ProfileInitials({required this.name});
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    initials(name),
+    style: const TextStyle(
+      color: AppColors.ink,
+      fontSize: 24,
+      fontWeight: FontWeight.w900,
+    ),
+  );
 }
 
 class _Stat extends StatelessWidget {
@@ -325,16 +614,19 @@ class _Highlight extends StatelessWidget {
 }
 
 class _ProfileAction extends StatelessWidget {
-  const _ProfileAction({required this.icon, required this.label});
+  const _ProfileAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: () => ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$label će biti dostupno uskoro.'))),
+    onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: const BoxDecoration(

@@ -19,4 +19,10 @@ public sealed record RefreshTokenRequest(
 public sealed record UpdateProfileRequest(
     [param: Required, StringLength(100, MinimumLength = 2)] string Ime,
     [param: Required, StringLength(100, MinimumLength = 2)] string Prezime,
-    [param: Phone, StringLength(30)] string? Telefon);
+    [param: Phone, StringLength(30)] string? Telefon,
+    [param: Url, StringLength(2048)] string? FotografijaUrl,
+    IReadOnlyCollection<int>? InstrumentIds);
+
+public sealed record ChangePasswordRequest(
+    [param: Required] string TrenutnaLozinka,
+    [param: Required, StringLength(128, MinimumLength = 10)] string NovaLozinka);

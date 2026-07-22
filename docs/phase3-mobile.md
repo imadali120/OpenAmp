@@ -21,6 +21,21 @@
 8. Rezervacije — predstojeće probe i historija.
 9. Profil — instrumenti, broj bendova/proba, sati, recenzije i omiljena sala.
 
+## FAZA 3.1 — završni mobilni tokovi
+
+- detalj rezervacije sa stavkama, nastavkom plaćanja i ponovnom rezervacijom iste sale
+- izmjena termina uz ponovnu provjeru dostupnosti i optimistic concurrency zaštitu
+- pregled politike otkazivanja, automatski izračun povrata i Stripe refund
+- ocjena i komentar nakon završene plaćene probe
+- trajno sačuvane sale i brzi filter „Sačuvane”
+- lokacija studija otvorena u vanjskoj navigaciji
+- uređivanje profila, fotografije, kontakta i instrumenata
+- postavke push/email obavijesti, jezika i privatnosti profila
+- promjena lozinke
+- primljene pozivnice za bend, prihvatanje/odbijanje, uređivanje člana, uklanjanje i napuštanje benda
+- Stripe Customer Session za sigurno čuvanje i uklanjanje kartica unutar PaymentSheeta
+- zaštita od napuštenih rezervacija: korisnik može osloboditi termin ako prekine checkout
+
 ## Backend endpointi za mobilnu aplikaciju
 
 | Metoda | Ruta | Namjena |
@@ -33,7 +48,19 @@
 | GET | `/api/bands/mine` | Bendovi prijavljenog korisnika |
 | POST | `/api/bands` | Kreiranje benda |
 | POST | `/api/bands/{id}/invitations` | Slanje pozivnice emailom |
+| GET | `/api/bands/invitations/received` | Primljene pozivnice |
+| POST | `/api/bands/invitations/{id}/respond` | Prihvatanje ili odbijanje pozivnice |
+| PUT | `/api/bands/{id}` | Uređivanje benda |
+| PUT/DELETE | `/api/bands/{id}/members/{userId}` | Upravljanje članom ili napuštanje benda |
 | GET | `/api/users/me/overview` | Prošireni profil i statistike |
+| PUT | `/api/users/me` | Kontakt, fotografija i instrumenti |
+| POST | `/api/users/me/change-password` | Promjena lozinke |
+| GET/PUT | `/api/users/me/settings` | Notifikacije, jezik i privatnost |
+| GET/PUT/DELETE | `/api/users/me/favorite-halls/{hallId}` | Sačuvane sale |
+| GET | `/api/reservations/{id}/cancellation-preview` | Politika i mogući iznos povrata |
+| PUT | `/api/reservations/{id}` | Izmjena termina |
+| POST | `/api/reservations/{id}/cancel` | Otkazivanje i refund |
+| POST | `/api/reservations/{id}/review` | Recenzija završene probe |
 
 ## Lokalna konfiguracija
 
@@ -49,9 +76,11 @@ Za fizički Android uređaj oba uređaja moraju biti na istoj mreži, API mora s
 
 1. Flutter šalje stavke i termin na `POST /api/reservations`.
 2. Backend ponovo provjerava dostupnost i računa konačnu cijenu.
-3. Flutter traži Payment Intent od `POST /api/payments/reservations/{id}/payment-intent`.
-4. Stripe PaymentSheet prikuplja karticu i izvršava potrebnu 3D Secure autentikaciju.
+3. Flutter traži Payment Intent i kratkotrajni Stripe Customer Session od `POST /api/payments/reservations/{id}/payment-intent`.
+4. Stripe PaymentSheet prikuplja karticu, omogućava čuvanje/uklanjanje kartice i izvršava potrebnu 3D Secure autentikaciju.
 5. Stripe webhook potvrđuje uplatu i mijenja status rezervacije u `Plaćena`.
+6. Mobilna aplikacija kratko provjerava status nakon PaymentSheeta; webhook ostaje autoritativni izvor konačnog statusa.
+7. Ako korisnik prekine checkout, aplikacija nudi otkazivanje rezervacije i oslobađanje termina/artikala.
 
 U Git se ne upisuju `sk_test_...`, `whsec_...` niti produkcijski ključevi.
 
@@ -60,6 +89,7 @@ U Git se ne upisuju `sk_test_...`, `whsec_...` niti produkcijski ključevi.
 ```powershell
 flutter analyze
 flutter test
+flutter test integration_test/app_smoke_test.dart
 ```
 
 Android APK build dodatno zahtijeva instaliran Android SDK i prihvaćene Google SDK licence:

@@ -43,3 +43,15 @@ public sealed class DohvatiSlobodneTermineQueryHandler(IRezervacijaService servi
         CancellationToken cancellationToken = default) =>
         service.DohvatiSlobodneTermineAsync(query, cancellationToken);
 }
+
+public sealed class DohvatiOtkazivanjePregledQueryHandler(IRezervacijaService service)
+    : IQueryHandler<DohvatiOtkazivanjePregledQuery, OtkazivanjePregledDto>
+{
+    public Task<OtkazivanjePregledDto> HandleAsync(
+        DohvatiOtkazivanjePregledQuery query,
+        CancellationToken cancellationToken = default) =>
+        service.DohvatiOtkazivanjePregledAsync(
+            query.RezervacijaId,
+            query.KorisnikId,
+            cancellationToken);
+}

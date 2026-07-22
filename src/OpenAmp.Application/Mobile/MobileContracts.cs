@@ -79,6 +79,17 @@ public sealed record PozivnicaBendaDto(
     string Status,
     DateTime IsticeUtc);
 
+public sealed record PrimljenaPozivnicaBendaDto(
+    int Id,
+    int BendId,
+    string Bend,
+    string Zanr,
+    string Pozvao,
+    string Kod,
+    string Status,
+    DateTime KreiranaUtc,
+    DateTime IsticeUtc);
+
 public sealed record BendDto(
     int Id,
     string Naziv,
@@ -92,15 +103,26 @@ public sealed record BendDto(
 
 public sealed record MobileRezervacijaDto(
     int Id,
+    int SalaId,
     string Sala,
     string Studio,
+    int BendId,
     string Bend,
     DateTime TerminOdUtc,
     DateTime TerminDoUtc,
     decimal UkupnaCijena,
     string Status,
+    string StatusKod,
     string RowVersion,
-    string? SlikaUrl);
+    string? SlikaUrl,
+    bool MozeOtkazati,
+    bool MozeRecenzirati);
+
+public sealed record KorisnickePostavkeDto(
+    bool PushNotifikacije,
+    bool EmailNotifikacije,
+    string Jezik,
+    bool ProfilJavan);
 
 public sealed record ProfilPregledDto(
     int Id,
@@ -130,6 +152,10 @@ public sealed record DohvatiMobileSifarnikeQuery : IQuery<MobileLookupsDto>;
 public sealed record DohvatiMojeBendoveQuery(int KorisnikId) : IQuery<IReadOnlyCollection<BendDto>>;
 public sealed record DohvatiMojeRezervacijeQuery(int KorisnikId) : IQuery<IReadOnlyCollection<MobileRezervacijaDto>>;
 public sealed record DohvatiProfilPregledQuery(int KorisnikId) : IQuery<ProfilPregledDto>;
+public sealed record DohvatiPrimljenePozivniceQuery(int KorisnikId)
+    : IQuery<IReadOnlyCollection<PrimljenaPozivnicaBendaDto>>;
+public sealed record DohvatiOmiljeneSaleQuery(int KorisnikId) : IQuery<IReadOnlyCollection<int>>;
+public sealed record DohvatiKorisnickePostavkeQuery(int KorisnikId) : IQuery<KorisnickePostavkeDto>;
 
 public sealed record KreirajBendCommand(
     int KorisnikId,
@@ -141,6 +167,46 @@ public sealed record PosaljiPozivnicuBendaCommand(
     int KorisnikId,
     int BendId,
     string Email) : ICommand<PozivnicaBendaDto>;
+
+public sealed record OdgovoriNaPozivnicuBendaCommand(
+    int KorisnikId,
+    int PozivnicaId,
+    bool Prihvati,
+    int? InstrumentId) : ICommand<PrimljenaPozivnicaBendaDto>;
+
+public sealed record AzurirajBendCommand(
+    int KorisnikId,
+    int BendId,
+    string Naziv,
+    int ZanrId,
+    string? Opis) : ICommand<BendDto>;
+
+public sealed record AzurirajClanaBendaCommand(
+    int KorisnikId,
+    int BendId,
+    int ClanKorisnikId,
+    int? InstrumentId,
+    string? Uloga) : ICommand<BendDto>;
+
+public sealed record UkloniClanaBendaCommand(
+    int KorisnikId,
+    int BendId,
+    int ClanKorisnikId) : ICommand<BendDto>;
+
+public sealed record PostaviOmiljenuSaluCommand(int KorisnikId, int SalaId, bool Sacuvana) : ICommand<bool>;
+
+public sealed record AzurirajKorisnickePostavkeCommand(
+    int KorisnikId,
+    bool PushNotifikacije,
+    bool EmailNotifikacije,
+    string Jezik,
+    bool ProfilJavan) : ICommand<KorisnickePostavkeDto>;
+
+public sealed record KreirajRecenzijuCommand(
+    int KorisnikId,
+    int RezervacijaId,
+    int Ocjena,
+    string? Komentar) : ICommand<RecenzijaSaleDto>;
 
 public interface IMobileExperienceService
 {
@@ -155,8 +221,32 @@ public interface IMobileExperienceService
     Task<PozivnicaBendaDto> PosaljiPozivnicuAsync(
         PosaljiPozivnicuBendaCommand command,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<PrimljenaPozivnicaBendaDto>> DohvatiPrimljenePozivniceAsync(
+        int korisnikId,
+        CancellationToken cancellationToken = default);
+    Task<PrimljenaPozivnicaBendaDto> OdgovoriNaPozivnicuAsync(
+        OdgovoriNaPozivnicuBendaCommand command,
+        CancellationToken cancellationToken = default);
+    Task<BendDto> AzurirajBendAsync(AzurirajBendCommand command, CancellationToken cancellationToken = default);
+    Task<BendDto> AzurirajClanaAsync(AzurirajClanaBendaCommand command, CancellationToken cancellationToken = default);
+    Task<BendDto> UkloniClanaAsync(UkloniClanaBendaCommand command, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<MobileRezervacijaDto>> DohvatiRezervacijeAsync(
         int korisnikId,
         CancellationToken cancellationToken = default);
     Task<ProfilPregledDto> DohvatiProfilAsync(int korisnikId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<int>> DohvatiOmiljeneSaleAsync(
+        int korisnikId,
+        CancellationToken cancellationToken = default);
+    Task<bool> PostaviOmiljenuSaluAsync(
+        PostaviOmiljenuSaluCommand command,
+        CancellationToken cancellationToken = default);
+    Task<KorisnickePostavkeDto> DohvatiPostavkeAsync(
+        int korisnikId,
+        CancellationToken cancellationToken = default);
+    Task<KorisnickePostavkeDto> AzurirajPostavkeAsync(
+        AzurirajKorisnickePostavkeCommand command,
+        CancellationToken cancellationToken = default);
+    Task<RecenzijaSaleDto> KreirajRecenzijuAsync(
+        KreirajRecenzijuCommand command,
+        CancellationToken cancellationToken = default);
 }

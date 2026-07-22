@@ -165,6 +165,81 @@ class OpenAmpRepository {
     }
   }
 
+  Future<List<ReceivedBandInvitation>> getReceivedInvitations() async {
+    try {
+      final response = await _apiClient.dio.get<List<dynamic>>(
+        '/api/bands/invitations/received',
+      );
+      return response.data!
+          .map(
+            (item) =>
+                ReceivedBandInvitation.fromJson(item as Map<String, dynamic>),
+          )
+          .toList();
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> respondToInvitation({
+    required int invitationId,
+    required bool accept,
+    int? instrumentId,
+  }) async {
+    try {
+      await _apiClient.dio.post<Map<String, dynamic>>(
+        '/api/bands/invitations/$invitationId/respond',
+        data: {'prihvati': accept, 'instrumentId': instrumentId},
+      );
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<Band> updateBand({
+    required int bandId,
+    required String name,
+    required int genreId,
+    String? description,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/api/bands/$bandId',
+        data: {'naziv': name, 'zanrId': genreId, 'opis': description},
+      );
+      return Band.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<Band> updateBandMember({
+    required int bandId,
+    required int userId,
+    int? instrumentId,
+    String? role,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/api/bands/$bandId/members/$userId',
+        data: {'instrumentId': instrumentId, 'uloga': role},
+      );
+      return Band.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> removeBandMember(int bandId, int userId) async {
+    try {
+      await _apiClient.dio.delete<Map<String, dynamic>>(
+        '/api/bands/$bandId/members/$userId',
+      );
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
   Future<List<Reservation>> getMyReservations() async {
     try {
       final response = await _apiClient.dio.get<List<dynamic>>(
@@ -173,6 +248,80 @@ class OpenAmpRepository {
       return response.data!
           .map((item) => Reservation.fromJson(item as Map<String, dynamic>))
           .toList();
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<ReservationDetails> getReservation(int id) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/api/reservations/$id',
+      );
+      return ReservationDetails.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<ReservationDetails> updateReservation({
+    required int id,
+    required DateTime startsAt,
+    required DateTime endsAt,
+    required String rowVersion,
+  }) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/api/reservations/$id',
+        data: {
+          'terminOdUtc': startsAt.toUtc().toIso8601String(),
+          'terminDoUtc': endsAt.toUtc().toIso8601String(),
+          'rowVersion': rowVersion,
+        },
+      );
+      return ReservationDetails.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<CancellationResult> cancelReservation({
+    required int id,
+    required String rowVersion,
+    String? reason,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post<Map<String, dynamic>>(
+        '/api/reservations/$id/cancel',
+        data: {'rowVersion': rowVersion, 'razlog': reason},
+      );
+      return CancellationResult.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<CancellationPreview> getCancellationPreview(int id) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/api/reservations/$id/cancellation-preview',
+      );
+      return CancellationPreview.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> createReview({
+    required int reservationId,
+    required int rating,
+    String? comment,
+  }) async {
+    try {
+      await _apiClient.dio.post<Map<String, dynamic>>(
+        '/api/reservations/$reservationId/review',
+        data: {'ocjena': rating, 'komentar': comment},
+      );
     } catch (error) {
       _apiClient.throwApiError(error);
     }
@@ -189,7 +338,97 @@ class OpenAmpRepository {
     }
   }
 
-  Future<int> createReservation(BookingDraft draft) async {
+  Future<void> updateProfile({
+    required String firstName,
+    required String lastName,
+    String? phone,
+    String? imageUrl,
+    required List<int> instrumentIds,
+  }) async {
+    try {
+      await _apiClient.dio.put<Map<String, dynamic>>(
+        '/api/users/me',
+        data: {
+          'ime': firstName,
+          'prezime': lastName,
+          'telefon': phone,
+          'fotografijaUrl': imageUrl,
+          'instrumentIds': instrumentIds,
+        },
+      );
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _apiClient.dio.post<void>(
+        '/api/users/me/change-password',
+        data: {'trenutnaLozinka': currentPassword, 'novaLozinka': newPassword},
+      );
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<Set<int>> getFavoriteHallIds() async {
+    try {
+      final response = await _apiClient.dio.get<List<dynamic>>(
+        '/api/users/me/favorite-halls',
+      );
+      return response.data!.cast<int>().toSet();
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> setFavoriteHall(int hallId, bool saved) async {
+    try {
+      if (saved) {
+        await _apiClient.dio.put<bool>('/api/users/me/favorite-halls/$hallId');
+      } else {
+        await _apiClient.dio.delete<bool>(
+          '/api/users/me/favorite-halls/$hallId',
+        );
+      }
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<UserSettings> getSettings() async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/api/users/me/settings',
+      );
+      return UserSettings.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<UserSettings> updateSettings(UserSettings settings) async {
+    try {
+      final response = await _apiClient.dio.put<Map<String, dynamic>>(
+        '/api/users/me/settings',
+        data: {
+          'pushNotifikacije': settings.pushNotifications,
+          'emailNotifikacije': settings.emailNotifications,
+          'jezik': settings.language,
+          'profilJavan': settings.publicProfile,
+        },
+      );
+      return UserSettings.fromJson(response.data!);
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<ReservationDetails> createReservation(BookingDraft draft) async {
     if (draft.band == null || draft.startsAt == null || draft.endsAt == null) {
       throw const ApiException('Odaberite bend i termin prije rezervacije.');
     }
@@ -225,7 +464,7 @@ class OpenAmpRepository {
           'stavke': items,
         },
       );
-      return response.data!['id'] as int;
+      return ReservationDetails.fromJson(response.data!);
     } catch (error) {
       _apiClient.throwApiError(error);
     }
@@ -242,6 +481,9 @@ class OpenAmpRepository {
         clientSecret: json['clientSecret'] as String,
         amount: json['iznosUNajmanjojJedinici'] as int,
         currency: json['valuta'] as String,
+        customerId: json['customerId'] as String,
+        customerSessionClientSecret:
+            json['customerSessionClientSecret'] as String,
       );
     } catch (error) {
       _apiClient.throwApiError(error);
@@ -261,9 +503,13 @@ class PaymentIntentValue {
     required this.clientSecret,
     required this.amount,
     required this.currency,
+    required this.customerId,
+    required this.customerSessionClientSecret,
   });
   final String id;
   final String clientSecret;
   final int amount;
   final String currency;
+  final String customerId;
+  final String customerSessionClientSecret;
 }

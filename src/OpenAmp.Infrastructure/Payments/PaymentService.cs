@@ -24,6 +24,7 @@ public sealed class PaymentService(
     {
         var rezervacija = await dbContext.Rezervacije
             .Include(x => x.Status)
+            .Include(x => x.KreiraoKorisnik)
             .SingleOrDefaultAsync(x => x.Id == rezervacijaId, cancellationToken)
             ?? throw new EntitetNijePronadjenException($"Rezervacija {rezervacijaId} nije pronađena.");
         if (rezervacija.KreiraoKorisnikId != korisnikId)
@@ -37,18 +38,37 @@ public sealed class PaymentService(
         }
 
         var iznos = StripeGateway.UNajmanjuJedinicu(rezervacija.UkupnaCijena);
+        var korisnik = rezervacija.KreiraoKorisnik;
+        if (string.IsNullOrWhiteSpace(korisnik.StripeCustomerId))
+        {
+            korisnik.StripeCustomerId = await stripeGateway.KreirajKupcaAsync(
+                korisnik.Id,
+                korisnik.Email,
+                $"{korisnik.Ime} {korisnik.Prezime}",
+                cancellationToken);
+        }
         var revizija = Convert.ToHexString(rezervacija.RowVersion);
         var intent = await stripeGateway.KreirajIliAzurirajPaymentIntentAsync(
             rezervacija.StripePaymentIntentId,
             iznos,
             stripeGateway.Valuta,
+            korisnik.StripeCustomerId,
             rezervacija.Id,
             $"openamp-rezervacija-{rezervacija.Id}-payment-{revizija}",
             cancellationToken);
         rezervacija.StripePaymentIntentId = intent.Id;
         rezervacija.AzuriranaUtc = timeProvider.GetUtcNow().UtcDateTime;
         await dbContext.SaveChangesAsync(cancellationToken);
-        return new PaymentIntentDto(intent.Id, intent.ClientSecret, iznos, stripeGateway.Valuta);
+        var customerSession = await stripeGateway.KreirajCustomerSessionAsync(
+            korisnik.StripeCustomerId,
+            cancellationToken);
+        return new PaymentIntentDto(
+            intent.Id,
+            intent.ClientSecret,
+            iznos,
+            stripeGateway.Valuta,
+            korisnik.StripeCustomerId,
+            customerSession);
     }
 
     public async Task ObradiWebhookAsync(

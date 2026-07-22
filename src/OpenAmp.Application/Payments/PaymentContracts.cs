@@ -6,7 +6,9 @@ public sealed record PaymentIntentDto(
     string PaymentIntentId,
     string ClientSecret,
     long IznosUNajmanjojJedinici,
-    string Valuta);
+    string Valuta,
+    string CustomerId,
+    string CustomerSessionClientSecret);
 
 public sealed record StripePaymentIntentResult(string Id, string ClientSecret);
 public sealed record StripeRefundResult(string Id, decimal Iznos);
@@ -38,8 +40,19 @@ public interface IStripeGateway
         string? postojeciPaymentIntentId,
         long iznosUNajmanjojJedinici,
         string valuta,
+        string customerId,
         int rezervacijaId,
         string idempotencyKey,
+        CancellationToken cancellationToken = default);
+
+    Task<string> KreirajKupcaAsync(
+        int korisnikId,
+        string email,
+        string imePrezime,
+        CancellationToken cancellationToken = default);
+
+    Task<string> KreirajCustomerSessionAsync(
+        string customerId,
         CancellationToken cancellationToken = default);
 
     Task<StripeRefundResult> RefundirajAsync(

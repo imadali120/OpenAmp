@@ -14,6 +14,7 @@ public sealed class StripeGateway(IOptions<StripeOptions> options) : IStripeGate
         string? postojeciPaymentIntentId,
         long iznosUNajmanjojJedinici,
         string valuta,
+        string customerId,
         int rezervacijaId,
         string idempotencyKey,
         CancellationToken cancellationToken = default)
@@ -30,6 +31,7 @@ public sealed class StripeGateway(IOptions<StripeOptions> options) : IStripeGate
                     {
                         Amount = iznosUNajmanjojJedinici,
                         Currency = valuta,
+                        Customer = customerId,
                         AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions { Enabled = true },
                         Description = $"OpenAmp rezervacija #{rezervacijaId}",
                         Metadata = new Dictionary<string, string>
@@ -54,6 +56,69 @@ public sealed class StripeGateway(IOptions<StripeOptions> options) : IStripeGate
         catch (StripeException exception)
         {
             throw new PaymentProviderException("Stripe PaymentIntent zahtjev nije uspio.", exception);
+        }
+    }
+
+    public async Task<string> KreirajKupcaAsync(
+        int korisnikId,
+        string email,
+        string imePrezime,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var service = new CustomerService(KreirajClient());
+            var customer = await service.CreateAsync(
+                new CustomerCreateOptions
+                {
+                    Email = email,
+                    Name = imePrezime,
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["openamp_korisnik_id"] = korisnikId.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    }
+                },
+                new RequestOptions { IdempotencyKey = $"openamp-korisnik-{korisnikId}-stripe-customer-v1" },
+                cancellationToken);
+            return customer.Id;
+        }
+        catch (StripeException exception)
+        {
+            throw new PaymentProviderException("Kreiranje Stripe korisnika nije uspjelo.", exception);
+        }
+    }
+
+    public async Task<string> KreirajCustomerSessionAsync(
+        string customerId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var service = new CustomerSessionService(KreirajClient());
+            var session = await service.CreateAsync(
+                new CustomerSessionCreateOptions
+                {
+                    Customer = customerId,
+                    Components = new CustomerSessionComponentsOptions
+                    {
+                        MobilePaymentElement = new CustomerSessionComponentsMobilePaymentElementOptions
+                        {
+                            Enabled = true,
+                            Features = new CustomerSessionComponentsMobilePaymentElementFeaturesOptions
+                            {
+                                PaymentMethodRedisplay = "enabled",
+                                PaymentMethodSave = "enabled",
+                                PaymentMethodRemove = "enabled"
+                            }
+                        }
+                    }
+                },
+                cancellationToken: cancellationToken);
+            return session.ClientSecret;
+        }
+        catch (StripeException exception)
+        {
+            throw new PaymentProviderException("Kreiranje Stripe customer session nije uspjelo.", exception);
         }
     }
 

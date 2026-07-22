@@ -16,8 +16,10 @@ internal sealed class KorisnikConfiguration : IEntityTypeConfiguration<Korisnik>
         builder.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
         builder.Property(x => x.Telefon).HasMaxLength(30);
         builder.Property(x => x.FotografijaUrl).HasMaxLength(2048);
+        builder.Property(x => x.StripeCustomerId).HasMaxLength(255);
         builder.Property(x => x.KreiranUtc).HasPrecision(0);
         builder.HasIndex(x => x.Email).IsUnique();
+        builder.HasIndex(x => x.StripeCustomerId).IsUnique().HasFilter("[StripeCustomerId] IS NOT NULL");
         builder.HasOne(x => x.Uloga)
             .WithMany(x => x.Korisnici)
             .HasForeignKey(x => x.UlogaId)
@@ -39,6 +41,40 @@ internal sealed class KorisnikInstrumentConfiguration : IEntityTypeConfiguration
             .WithMany(x => x.Korisnici)
             .HasForeignKey(x => x.InstrumentId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class PostavkeKorisnikaConfiguration : IEntityTypeConfiguration<PostavkeKorisnika>
+{
+    public void Configure(EntityTypeBuilder<PostavkeKorisnika> builder)
+    {
+        builder.ToTable("PostavkeKorisnika");
+        builder.HasKey(x => x.KorisnikId);
+        builder.Property(x => x.Jezik).HasMaxLength(10).IsRequired();
+        builder.Property(x => x.AzuriraneUtc).HasPrecision(0);
+        builder.HasOne(x => x.Korisnik)
+            .WithOne(x => x.Postavke)
+            .HasForeignKey<PostavkeKorisnika>(x => x.KorisnikId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class OmiljenaSalaConfiguration : IEntityTypeConfiguration<OmiljenaSala>
+{
+    public void Configure(EntityTypeBuilder<OmiljenaSala> builder)
+    {
+        builder.ToTable("OmiljeneSale");
+        builder.HasKey(x => new { x.KorisnikId, x.SalaId });
+        builder.Property(x => x.KreiranaUtc).HasPrecision(0);
+        builder.HasIndex(x => new { x.KorisnikId, x.KreiranaUtc });
+        builder.HasOne(x => x.Korisnik)
+            .WithMany(x => x.OmiljeneSale)
+            .HasForeignKey(x => x.KorisnikId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Sala)
+            .WithMany(x => x.Favoriti)
+            .HasForeignKey(x => x.SalaId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 

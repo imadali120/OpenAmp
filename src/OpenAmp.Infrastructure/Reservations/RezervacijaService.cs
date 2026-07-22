@@ -243,7 +243,7 @@ public sealed class RezervacijaService(
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == rezervacijaId, cancellationToken)
             ?? throw new EntitetNijePronadjenException($"Rezervacija {rezervacijaId} nije pronađena.");
-        OsigurajVlasnistvo(rezervacija, korisnikId);
+        await OsigurajPristupAsync(rezervacija, korisnikId, cancellationToken);
         return Mapiraj(rezervacija);
     }
 
@@ -293,6 +293,26 @@ public sealed class RezervacijaService(
         }
 
         return rezultat;
+    }
+
+    public async Task<OtkazivanjePregledDto> DohvatiOtkazivanjePregledAsync(
+        int rezervacijaId,
+        int korisnikId,
+        CancellationToken cancellationToken = default)
+    {
+        var rezervacija = await UpitRezervacije().AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == rezervacijaId, cancellationToken)
+            ?? throw new EntitetNijePronadjenException($"Rezervacija {rezervacijaId} nije pronađena.");
+        OsigurajVlasnistvo(rezervacija, korisnikId);
+        var studio = rezervacija.Sala.Studio;
+        var povrat = AktivniStatusi.Contains(rezervacija.Status.Kod)
+            ? IzracunajRefund(rezervacija, timeProvider.GetUtcNow().UtcDateTime)
+            : 0;
+        return new OtkazivanjePregledDto(
+            povrat,
+            studio.PuniPovratDoSati,
+            studio.DjelimicniPovratDoSati,
+            studio.DjelimicniPovratPostotak);
     }
 
     private IQueryable<Rezervacija> UpitRezervacije() => dbContext.Rezervacije
@@ -486,6 +506,25 @@ public sealed class RezervacijaService(
         }
     }
 
+    private async Task OsigurajPristupAsync(
+        Rezervacija rezervacija,
+        int korisnikId,
+        CancellationToken cancellationToken)
+    {
+        if (rezervacija.KreiraoKorisnikId == korisnikId)
+        {
+            return;
+        }
+
+        var clanBenda = await dbContext.ClanoviBenda.AnyAsync(
+            x => x.BendId == rezervacija.BendId && x.KorisnikId == korisnikId && x.Aktivan,
+            cancellationToken);
+        if (!clanBenda)
+        {
+            throw new NedozvoljenaOperacijaException("Nemate pristup ovoj rezervaciji.");
+        }
+    }
+
     private static void OsigurajUnutarRadnogVremena(
         Studio studio,
         DateTime terminOdUtc,
@@ -525,6 +564,7 @@ public sealed class RezervacijaService(
         rezervacija.TerminDoUtc,
         rezervacija.UkupnaCijena,
         rezervacija.Status.Naziv,
+        rezervacija.Status.Kod,
         rezervacija.Napomena,
         Convert.ToBase64String(rezervacija.RowVersion),
         rezervacija.Stavke.Select(x => new StavkaRezervacijeDto(

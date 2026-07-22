@@ -19,6 +19,7 @@ public sealed class KorisnikRepository(OpenAmpDbContext dbContext) : IKorisnikRe
     public Task<Korisnik?> DohvatiPoIdAsync(int id, CancellationToken cancellationToken = default) =>
         dbContext.Korisnici
             .Include(x => x.Uloga)
+            .Include(x => x.Instrumenti)
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task<Korisnik?> DohvatiPoRefreshTokenHashuAsync(
@@ -31,6 +32,11 @@ public sealed class KorisnikRepository(OpenAmpDbContext dbContext) : IKorisnikRe
 
     public async Task<Uloga> DohvatiUloguMuzicaraAsync(CancellationToken cancellationToken = default) =>
         await dbContext.Uloge.SingleAsync(x => x.Kod == "MUZICAR", cancellationToken);
+
+    public async Task<IReadOnlyCollection<Instrument>> DohvatiInstrumenteAsync(
+        IReadOnlyCollection<int> ids,
+        CancellationToken cancellationToken = default) =>
+        await dbContext.Instrumenti.Where(x => ids.Contains(x.Id)).ToArrayAsync(cancellationToken);
 
     public async Task DodajAsync(Korisnik korisnik, CancellationToken cancellationToken = default) =>
         await dbContext.Korisnici.AddAsync(korisnik, cancellationToken);

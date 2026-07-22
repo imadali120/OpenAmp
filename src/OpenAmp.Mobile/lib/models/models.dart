@@ -252,6 +252,45 @@ class BandInvitation {
   );
 }
 
+class ReceivedBandInvitation {
+  const ReceivedBandInvitation({
+    required this.id,
+    required this.bandId,
+    required this.band,
+    required this.genre,
+    required this.invitedBy,
+    required this.code,
+    required this.status,
+    required this.createdAt,
+    required this.expiresAt,
+  });
+
+  final int id;
+  final int bandId;
+  final String band;
+  final String genre;
+  final String invitedBy;
+  final String code;
+  final String status;
+  final DateTime createdAt;
+  final DateTime expiresAt;
+
+  bool get pending => status.toLowerCase().contains('čekanju');
+
+  factory ReceivedBandInvitation.fromJson(Map<String, dynamic> json) =>
+      ReceivedBandInvitation(
+        id: json['id'] as int,
+        bandId: json['bendId'] as int,
+        band: json['bend'] as String,
+        genre: json['zanr'] as String,
+        invitedBy: json['pozvao'] as String,
+        code: json['kod'] as String,
+        status: json['status'] as String,
+        createdAt: DateTime.parse(json['kreiranaUtc'] as String).toUtc(),
+        expiresAt: DateTime.parse(json['isticeUtc'] as String).toUtc(),
+      );
+}
+
 class Band {
   const Band({
     required this.id,
@@ -290,38 +329,195 @@ class Band {
 class Reservation {
   const Reservation({
     required this.id,
+    required this.hallId,
     required this.hall,
     required this.studio,
+    required this.bandId,
     required this.band,
     required this.startsAt,
     required this.endsAt,
     required this.total,
     required this.status,
+    required this.statusCode,
     required this.rowVersion,
     required this.imageUrl,
+    required this.canCancel,
+    required this.canReview,
   });
   final int id;
+  final int hallId;
   final String hall;
   final String studio;
+  final int bandId;
   final String band;
   final DateTime startsAt;
   final DateTime endsAt;
   final double total;
   final String status;
+  final String statusCode;
   final String rowVersion;
   final String? imageUrl;
+  final bool canCancel;
+  final bool canReview;
 
   factory Reservation.fromJson(Map<String, dynamic> json) => Reservation(
     id: json['id'] as int,
+    hallId: json['salaId'] as int,
     hall: json['sala'] as String,
     studio: json['studio'] as String,
+    bandId: json['bendId'] as int,
     band: json['bend'] as String,
     startsAt: DateTime.parse(json['terminOdUtc'] as String).toUtc(),
     endsAt: DateTime.parse(json['terminDoUtc'] as String).toUtc(),
     total: (json['ukupnaCijena'] as num).toDouble(),
     status: json['status'] as String,
+    statusCode: json['statusKod'] as String,
     rowVersion: json['rowVersion'] as String,
     imageUrl: json['slikaUrl'] as String?,
+    canCancel: json['mozeOtkazati'] as bool,
+    canReview: json['mozeRecenzirati'] as bool,
+  );
+}
+
+class ReservationItem {
+  const ReservationItem({
+    required this.id,
+    required this.equipmentId,
+    required this.storeItemId,
+    required this.name,
+    required this.quantity,
+    required this.unitPrice,
+    required this.hours,
+    required this.total,
+  });
+  final int id;
+  final int? equipmentId;
+  final int? storeItemId;
+  final String name;
+  final int quantity;
+  final double unitPrice;
+  final double hours;
+  final double total;
+
+  factory ReservationItem.fromJson(Map<String, dynamic> json) =>
+      ReservationItem(
+        id: json['id'] as int,
+        equipmentId: json['opremaId'] as int?,
+        storeItemId: json['artikalId'] as int?,
+        name: json['naziv'] as String,
+        quantity: json['kolicina'] as int,
+        unitPrice: (json['jedinicnaCijena'] as num).toDouble(),
+        hours: (json['brojSati'] as num).toDouble(),
+        total: (json['ukupnaCijena'] as num).toDouble(),
+      );
+}
+
+class ReservationDetails {
+  const ReservationDetails({
+    required this.id,
+    required this.hallId,
+    required this.hall,
+    required this.bandId,
+    required this.band,
+    required this.startsAt,
+    required this.endsAt,
+    required this.total,
+    required this.status,
+    required this.statusCode,
+    required this.note,
+    required this.rowVersion,
+    required this.items,
+  });
+  final int id;
+  final int hallId;
+  final String hall;
+  final int bandId;
+  final String band;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final double total;
+  final String status;
+  final String statusCode;
+  final String? note;
+  final String rowVersion;
+  final List<ReservationItem> items;
+
+  factory ReservationDetails.fromJson(Map<String, dynamic> json) =>
+      ReservationDetails(
+        id: json['id'] as int,
+        hallId: json['salaId'] as int,
+        hall: json['sala'] as String,
+        bandId: json['bendId'] as int,
+        band: json['bend'] as String,
+        startsAt: DateTime.parse(json['terminOdUtc'] as String).toUtc(),
+        endsAt: DateTime.parse(json['terminDoUtc'] as String).toUtc(),
+        total: (json['ukupnaCijena'] as num).toDouble(),
+        status: json['status'] as String,
+        statusCode: json['statusKod'] as String,
+        note: json['napomena'] as String?,
+        rowVersion: json['rowVersion'] as String,
+        items: _list(json['stavke'], ReservationItem.fromJson),
+      );
+}
+
+class CancellationResult {
+  const CancellationResult({
+    required this.reservation,
+    required this.refundedAmount,
+    required this.stripeRefundId,
+  });
+  final ReservationDetails reservation;
+  final double refundedAmount;
+  final String? stripeRefundId;
+
+  factory CancellationResult.fromJson(Map<String, dynamic> json) =>
+      CancellationResult(
+        reservation: ReservationDetails.fromJson(
+          json['rezervacija'] as Map<String, dynamic>,
+        ),
+        refundedAmount: (json['refundiraniIznos'] as num).toDouble(),
+        stripeRefundId: json['stripeRefundId'] as String?,
+      );
+}
+
+class CancellationPreview {
+  const CancellationPreview({
+    required this.possibleRefund,
+    required this.fullRefundHours,
+    required this.partialRefundHours,
+    required this.partialRefundPercent,
+  });
+  final double possibleRefund;
+  final int fullRefundHours;
+  final int partialRefundHours;
+  final int partialRefundPercent;
+
+  factory CancellationPreview.fromJson(Map<String, dynamic> json) =>
+      CancellationPreview(
+        possibleRefund: (json['moguciPovrat'] as num).toDouble(),
+        fullRefundHours: json['puniPovratDoSati'] as int,
+        partialRefundHours: json['djelimicniPovratDoSati'] as int,
+        partialRefundPercent: json['djelimicniPovratPostotak'] as int,
+      );
+}
+
+class UserSettings {
+  const UserSettings({
+    required this.pushNotifications,
+    required this.emailNotifications,
+    required this.language,
+    required this.publicProfile,
+  });
+  final bool pushNotifications;
+  final bool emailNotifications;
+  final String language;
+  final bool publicProfile;
+
+  factory UserSettings.fromJson(Map<String, dynamic> json) => UserSettings(
+    pushNotifications: json['pushNotifikacije'] as bool,
+    emailNotifications: json['emailNotifikacije'] as bool,
+    language: json['jezik'] as String,
+    publicProfile: json['profilJavan'] as bool,
   );
 }
 

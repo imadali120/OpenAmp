@@ -18,6 +18,7 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
   String? _genre;
   String? _equipmentCategory;
   int? _capacity;
+  bool _favoritesOnly = false;
 
   @override
   void dispose() {
@@ -40,6 +41,11 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(appControllerProvider);
     final lookups = state.lookups;
+    final visibleHalls = _favoritesOnly
+        ? state.halls
+              .where((hall) => state.favoriteHallIds.contains(hall.id))
+              .toList()
+        : state.halls;
     return Scaffold(
       body: SafeArea(
         bottom: false,
@@ -158,6 +164,15 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                                 _runSearch();
                               },
                             ),
+                            const SizedBox(width: 8),
+                            _FilterPill(
+                              icon: Icons.favorite_outline_rounded,
+                              label: 'Sačuvane',
+                              selected: _favoritesOnly,
+                              onTap: () => setState(
+                                () => _favoritesOnly = !_favoritesOnly,
+                              ),
+                            ),
                             if (lookups != null)
                               ...lookups.equipmentCategories
                                   .take(4)
@@ -205,7 +220,7 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                             ),
                           ),
                           Text(
-                            "${state.halls.length.toString().padLeft(2, '0')} ROOMS",
+                            "${visibleHalls.length.toString().padLeft(2, '0')} ROOMS",
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 11,
@@ -234,7 +249,7 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                   hasScrollBody: false,
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (state.halls.isEmpty)
+              else if (visibleHalls.isEmpty)
                 const SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(child: Text('Nema sala za ove filtere.')),
@@ -243,10 +258,10 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(18, 0, 18, 26),
                   sliver: SliverList.separated(
-                    itemCount: state.halls.length,
+                    itemCount: visibleHalls.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 13),
                     itemBuilder: (context, index) =>
-                        _HallCard(hall: state.halls[index], number: index + 1),
+                        _HallCard(hall: visibleHalls[index], number: index + 1),
                   ),
                 ),
             ],

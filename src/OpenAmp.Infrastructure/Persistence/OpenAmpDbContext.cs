@@ -11,6 +11,8 @@ public sealed class OpenAmpDbContext(DbContextOptions<OpenAmpDbContext> options)
     public DbSet<Uloga> Uloge => Set<Uloga>();
     public DbSet<Instrument> Instrumenti => Set<Instrument>();
     public DbSet<KorisnikInstrument> KorisnikInstrumenti => Set<KorisnikInstrument>();
+    public DbSet<PostavkeKorisnika> PostavkeKorisnika => Set<PostavkeKorisnika>();
+    public DbSet<OmiljenaSala> OmiljeneSale => Set<OmiljenaSala>();
     public DbSet<Zanr> Zanrovi => Set<Zanr>();
     public DbSet<Bend> Bendovi => Set<Bend>();
     public DbSet<ClanBenda> ClanoviBenda => Set<ClanBenda>();

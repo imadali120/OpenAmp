@@ -40,6 +40,7 @@ public sealed class Sala
     public ICollection<Oprema> Oprema { get; set; } = [];
     public ICollection<Rezervacija> Rezervacije { get; set; } = [];
     public ICollection<Recenzija> Recenzije { get; set; } = [];
+    public ICollection<OmiljenaSala> Favoriti { get; set; } = [];
 }
 
 public sealed class SalaSlika
