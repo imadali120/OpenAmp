@@ -16,11 +16,23 @@ public sealed class Rezervacija
     public StatusRezervacije Status { get; set; } = null!;
     public string? Napomena { get; set; }
     public string? StripePaymentIntentId { get; set; }
+    public string? StripeRefundId { get; set; }
+    public decimal RefundiraniIznos { get; set; }
+    public DateTime? RefundiranUtc { get; set; }
+    public DateTime? OtkazanaUtc { get; set; }
+    public string? RazlogOtkazivanja { get; set; }
     public DateTime KreiranaUtc { get; set; }
     public DateTime AzuriranaUtc { get; set; }
     public byte[] RowVersion { get; set; } = [];
     public ICollection<StavkaRezervacije> Stavke { get; set; } = [];
     public Recenzija? Recenzija { get; set; }
+}
+
+public sealed class StripeWebhookDogadjaj
+{
+    public string Id { get; set; } = string.Empty;
+    public string Tip { get; set; } = string.Empty;
+    public DateTime ObradjenUtc { get; set; }
 }
 
 public sealed class StavkaRezervacije

@@ -94,6 +94,12 @@ internal static class OpenAmpSeed
             Telefon = "+387 36 000 001",
             Email = "mostar@example.openamp.local",
             Aktivan = true,
+            VremenskaZona = "Europe/Sarajevo",
+            RadnoVrijemeOd = new TimeOnly(8, 0),
+            RadnoVrijemeDo = new TimeOnly(23, 0),
+            PuniPovratDoSati = 24,
+            DjelimicniPovratDoSati = 12,
+            DjelimicniPovratPostotak = 50,
             VlasnikId = (int?)null
         },
         new
@@ -106,6 +112,12 @@ internal static class OpenAmpSeed
             Telefon = "+387 33 000 002",
             Email = "sarajevo@example.openamp.local",
             Aktivan = true,
+            VremenskaZona = "Europe/Sarajevo",
+            RadnoVrijemeOd = new TimeOnly(8, 0),
+            RadnoVrijemeDo = new TimeOnly(23, 0),
+            PuniPovratDoSati = 24,
+            DjelimicniPovratDoSati = 12,
+            DjelimicniPovratPostotak = 50,
             VlasnikId = (int?)null
         }
     ];

@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using OpenAmp.Application.Payments;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Domain.Entities;
 using OpenAmp.Domain.Rules;
@@ -8,16 +9,23 @@ using OpenAmp.Infrastructure.Persistence;
 
 namespace OpenAmp.Infrastructure.Reservations;
 
-public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacijaService
+public sealed class RezervacijaService(
+    OpenAmpDbContext dbContext,
+    IStripeGateway stripeGateway,
+    TimeProvider timeProvider) : IRezervacijaService
 {
     private static readonly string[] AktivniStatusi = ["NA_CEKANJU", "PLACENA"];
 
-    public async Task<int> KreirajAsync(
-        NovaRezervacija zahtjev,
+    public async Task<RezervacijaDto> KreirajAsync(
+        KreirajRezervacijuCommand zahtjev,
         CancellationToken cancellationToken = default)
     {
         RezervacijaPravila.ProvjeriTermin(zahtjev.TerminOdUtc, zahtjev.TerminDoUtc);
         ProvjeriStavke(zahtjev.Stavke);
+        if (zahtjev.TerminOdUtc <= timeProvider.GetUtcNow().UtcDateTime)
+        {
+            throw new ArgumentException("Nije moguće rezervisati termin u prošlosti.");
+        }
 
         try
         {
@@ -26,17 +34,26 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
                 cancellationToken);
 
             var sala = await dbContext.Sale
+                .Include(x => x.Status)
+                .Include(x => x.Studio)
                 .SingleOrDefaultAsync(x => x.Id == zahtjev.SalaId, cancellationToken)
                 ?? throw new EntitetNijePronadjenException($"Sala {zahtjev.SalaId} nije pronađena.");
-
-            if (!await dbContext.Bendovi.AnyAsync(x => x.Id == zahtjev.BendId, cancellationToken))
+            if (sala.Status.Kod != "AKTIVNA" || !sala.Studio.Aktivan)
             {
-                throw new EntitetNijePronadjenException($"Bend {zahtjev.BendId} nije pronađen.");
+                throw new NedozvoljenaOperacijaException("Odabrana sala trenutno nije aktivna.");
             }
 
-            if (!await dbContext.Korisnici.AnyAsync(x => x.Id == zahtjev.KreiraoKorisnikId, cancellationToken))
+            OsigurajUnutarRadnogVremena(sala.Studio, zahtjev.TerminOdUtc, zahtjev.TerminDoUtc);
+
+            var bend = await dbContext.Bendovi.SingleOrDefaultAsync(x => x.Id == zahtjev.BendId, cancellationToken)
+                ?? throw new EntitetNijePronadjenException($"Bend {zahtjev.BendId} nije pronađen.");
+            var pripadaBendu = bend.OsnivacId == zahtjev.KorisnikId
+                || await dbContext.ClanoviBenda.AnyAsync(
+                    x => x.BendId == zahtjev.BendId && x.KorisnikId == zahtjev.KorisnikId && x.Aktivan,
+                    cancellationToken);
+            if (!pripadaBendu)
             {
-                throw new EntitetNijePronadjenException($"Korisnik {zahtjev.KreiraoKorisnikId} nije pronađen.");
+                throw new NedozvoljenaOperacijaException("Rezervaciju može kreirati samo član odabranog benda.");
             }
 
             await OsigurajSlobodanTerminAsync(
@@ -46,25 +63,22 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
                 null,
                 cancellationToken);
 
-            var statusNaCekanjuId = await dbContext.StatusiRezervacija
-                .Where(x => x.Kod == "NA_CEKANJU")
-                .Select(x => x.Id)
-                .SingleAsync(cancellationToken);
-
+            var status = await dbContext.StatusiRezervacija
+                .SingleAsync(x => x.Kod == "NA_CEKANJU", cancellationToken);
             var trajanjeSati = TrajanjeUSatima(zahtjev.TerminOdUtc, zahtjev.TerminDoUtc);
-            var stavke = await KreirajStavkeAsync(
-                zahtjev,
-                trajanjeSati,
-                cancellationToken);
-            var sadaUtc = DateTime.UtcNow;
+            var stavke = await KreirajStavkeAsync(zahtjev, trajanjeSati, cancellationToken);
+            var sadaUtc = timeProvider.GetUtcNow().UtcDateTime;
             var rezervacija = new Rezervacija
             {
                 SalaId = zahtjev.SalaId,
+                Sala = sala,
                 BendId = zahtjev.BendId,
-                KreiraoKorisnikId = zahtjev.KreiraoKorisnikId,
+                Bend = bend,
+                KreiraoKorisnikId = zahtjev.KorisnikId,
                 TerminOdUtc = zahtjev.TerminOdUtc,
                 TerminDoUtc = zahtjev.TerminDoUtc,
-                StatusRezervacijeId = statusNaCekanjuId,
+                StatusRezervacijeId = status.Id,
+                Status = status,
                 Napomena = zahtjev.Napomena,
                 KreiranaUtc = sadaUtc,
                 AzuriranaUtc = sadaUtc,
@@ -78,8 +92,7 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
             dbContext.Rezervacije.Add(rezervacija);
             await dbContext.SaveChangesAsync(cancellationToken);
             await transakcija.CommitAsync(cancellationToken);
-
-            return rezervacija.Id;
+            return Mapiraj(rezervacija);
         }
         catch (Exception exception) when (JeSqlServerDeadlock(exception))
         {
@@ -89,53 +102,52 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
         }
     }
 
-    public async Task PromijeniTerminAsync(
-        int rezervacijaId,
-        DateTime terminOdUtc,
-        DateTime terminDoUtc,
-        byte[] ocekivaniRowVersion,
+    public async Task<RezervacijaDto> PromijeniTerminAsync(
+        IzmijeniRezervacijuCommand zahtjev,
         CancellationToken cancellationToken = default)
     {
-        RezervacijaPravila.ProvjeriTermin(terminOdUtc, terminDoUtc);
-        if (ocekivaniRowVersion.Length == 0)
+        RezervacijaPravila.ProvjeriTermin(zahtjev.TerminOdUtc, zahtjev.TerminDoUtc);
+        if (zahtjev.TerminOdUtc <= timeProvider.GetUtcNow().UtcDateTime)
         {
-            throw new ArgumentException("RowVersion je obavezan.", nameof(ocekivaniRowVersion));
+            throw new ArgumentException("Novi termin mora biti u budućnosti.");
         }
 
+        var rowVersion = DekodirajRowVersion(zahtjev.RowVersion);
         try
         {
             await using var transakcija = await dbContext.Database.BeginTransactionAsync(
                 IsolationLevel.Serializable,
                 cancellationToken);
+            var rezervacija = await UpitRezervacije()
+                .SingleOrDefaultAsync(x => x.Id == zahtjev.RezervacijaId, cancellationToken)
+                ?? throw new EntitetNijePronadjenException($"Rezervacija {zahtjev.RezervacijaId} nije pronađena.");
+            OsigurajVlasnistvo(rezervacija, zahtjev.KorisnikId);
+            if (rezervacija.Status.Kod != "NA_CEKANJU")
+            {
+                throw new NedozvoljenaOperacijaException("Mijenjati se može samo rezervacija koja čeka plaćanje.");
+            }
 
-            var rezervacija = await dbContext.Rezervacije
-                .Include(x => x.Sala)
-                .Include(x => x.Stavke)
-                .SingleOrDefaultAsync(x => x.Id == rezervacijaId, cancellationToken)
-                ?? throw new EntitetNijePronadjenException($"Rezervacija {rezervacijaId} nije pronađena.");
 
-            dbContext.Entry(rezervacija)
-                .Property(x => x.RowVersion)
-                .OriginalValue = ocekivaniRowVersion;
+            OsigurajUnutarRadnogVremena(
+                rezervacija.Sala.Studio,
+                zahtjev.TerminOdUtc,
+                zahtjev.TerminDoUtc);
 
+            dbContext.Entry(rezervacija).Property(x => x.RowVersion).OriginalValue = rowVersion;
             await OsigurajSlobodanTerminAsync(
                 rezervacija.SalaId,
-                terminOdUtc,
-                terminDoUtc,
-                rezervacijaId,
+                zahtjev.TerminOdUtc,
+                zahtjev.TerminDoUtc,
+                rezervacija.Id,
                 cancellationToken);
-
             await OsigurajDostupnostOpremeAsync(
-                rezervacija.Stavke
-                    .Where(x => x.OpremaId.HasValue)
-                    .Select(x => x.OpremaId!.Value)
-                    .ToArray(),
-                terminOdUtc,
-                terminDoUtc,
-                rezervacijaId,
+                rezervacija.Stavke.Where(x => x.OpremaId.HasValue).Select(x => x.OpremaId!.Value).ToArray(),
+                zahtjev.TerminOdUtc,
+                zahtjev.TerminDoUtc,
+                rezervacija.Id,
                 cancellationToken);
 
-            var trajanjeSati = TrajanjeUSatima(terminOdUtc, terminDoUtc);
+            var trajanjeSati = TrajanjeUSatima(zahtjev.TerminOdUtc, zahtjev.TerminDoUtc);
             foreach (var stavka in rezervacija.Stavke.Where(x => x.OpremaId.HasValue))
             {
                 stavka.BrojSati = trajanjeSati;
@@ -145,34 +157,149 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
                     MidpointRounding.AwayFromZero);
             }
 
-            rezervacija.TerminOdUtc = terminOdUtc;
-            rezervacija.TerminDoUtc = terminDoUtc;
-            rezervacija.AzuriranaUtc = DateTime.UtcNow;
+            rezervacija.TerminOdUtc = zahtjev.TerminOdUtc;
+            rezervacija.TerminDoUtc = zahtjev.TerminDoUtc;
+            rezervacija.AzuriranaUtc = timeProvider.GetUtcNow().UtcDateTime;
             rezervacija.UkupnaCijena = decimal.Round(
                 (rezervacija.Sala.CijenaPoSatu * trajanjeSati) + rezervacija.Stavke.Sum(x => x.UkupnaCijena),
                 2,
                 MidpointRounding.AwayFromZero);
 
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken);
-                await transakcija.CommitAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException exception)
-            {
-                await transakcija.RollbackAsync(cancellationToken);
-                throw new KonfliktKonkurentnostiException(
-                    "Rezervaciju je u međuvremenu izmijenio drugi korisnik. Osvježite podatke i pokušajte ponovo.",
-                    exception);
-            }
+            await SacuvajSaConcurrencyProvjeromAsync(transakcija, cancellationToken);
+            return Mapiraj(rezervacija);
         }
         catch (Exception exception) when (JeSqlServerDeadlock(exception))
         {
             throw new KonfliktKonkurentnostiException(
-                "Druga rezervacija je istovremeno promijenila zauzetost termina. Osvježite podatke i pokušajte ponovo.",
+                "Druga rezervacija je istovremeno promijenila zauzetost termina.",
                 exception);
         }
     }
+
+    public async Task<OtkazivanjeRezultatDto> OtkaziAsync(
+        OtkaziRezervacijuCommand zahtjev,
+        CancellationToken cancellationToken = default)
+    {
+        var rezervacija = await UpitRezervacije()
+            .SingleOrDefaultAsync(x => x.Id == zahtjev.RezervacijaId, cancellationToken)
+            ?? throw new EntitetNijePronadjenException($"Rezervacija {zahtjev.RezervacijaId} nije pronađena.");
+        OsigurajVlasnistvo(rezervacija, zahtjev.KorisnikId);
+        if (!AktivniStatusi.Contains(rezervacija.Status.Kod))
+        {
+            throw new NedozvoljenaOperacijaException("Rezervaciju u trenutnom statusu nije moguće otkazati.");
+        }
+
+        var sadaUtc = timeProvider.GetUtcNow().UtcDateTime;
+        if (rezervacija.TerminOdUtc <= sadaUtc)
+        {
+            throw new NedozvoljenaOperacijaException("Nije moguće otkazati rezervaciju čiji je termin počeo.");
+        }
+
+        dbContext.Entry(rezervacija).Property(x => x.RowVersion).OriginalValue = DekodirajRowVersion(zahtjev.RowVersion);
+        var refundIznos = IzracunajRefund(rezervacija, sadaUtc);
+        string? refundId = null;
+        if (rezervacija.StripePaymentIntentId is not null)
+        {
+            if (rezervacija.Status.Kod == "PLACENA" && refundIznos > 0)
+            {
+                var refund = await stripeGateway.RefundirajAsync(
+                    rezervacija.StripePaymentIntentId,
+                    refundIznos,
+                    stripeGateway.Valuta,
+                    $"openamp-rezervacija-{rezervacija.Id}-refund-v1",
+                    cancellationToken);
+                refundId = refund.Id;
+                rezervacija.StripeRefundId = refund.Id;
+                rezervacija.RefundiraniIznos = refund.Iznos;
+                rezervacija.RefundiranUtc = sadaUtc;
+            }
+            else if (rezervacija.Status.Kod == "NA_CEKANJU")
+            {
+                await stripeGateway.OtkaziPaymentIntentAsync(rezervacija.StripePaymentIntentId, cancellationToken);
+            }
+        }
+
+        foreach (var stavka in rezervacija.Stavke.Where(x => x.ArtikalId.HasValue && x.Artikal is not null))
+        {
+            stavka.Artikal!.KolicinaNaStanju += stavka.Kolicina;
+        }
+
+        rezervacija.Status = await dbContext.StatusiRezervacija
+            .SingleAsync(x => x.Kod == "OTKAZANA", cancellationToken);
+        rezervacija.StatusRezervacijeId = rezervacija.Status.Id;
+        rezervacija.OtkazanaUtc = sadaUtc;
+        rezervacija.RazlogOtkazivanja = zahtjev.Razlog?.Trim();
+        rezervacija.AzuriranaUtc = sadaUtc;
+        await SacuvajSaConcurrencyProvjeromAsync(null, cancellationToken);
+        return new OtkazivanjeRezultatDto(Mapiraj(rezervacija), refundIznos, refundId);
+    }
+
+    public async Task<RezervacijaDto> DohvatiAsync(
+        int rezervacijaId,
+        int korisnikId,
+        CancellationToken cancellationToken = default)
+    {
+        var rezervacija = await UpitRezervacije()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == rezervacijaId, cancellationToken)
+            ?? throw new EntitetNijePronadjenException($"Rezervacija {rezervacijaId} nije pronađena.");
+        OsigurajVlasnistvo(rezervacija, korisnikId);
+        return Mapiraj(rezervacija);
+    }
+
+    public async Task<IReadOnlyCollection<SlobodanTerminDto>> DohvatiSlobodneTermineAsync(
+        DohvatiSlobodneTermineQuery upit,
+        CancellationToken cancellationToken = default)
+    {
+        if (upit.TrajanjeMinuta is < 30 or > 720 || upit.KorakMinuta is < 15 or > 120)
+        {
+            throw new ArgumentException("Trajanje ili korak termina nisu u dozvoljenom rasponu.");
+        }
+
+        var sala = await dbContext.Sale.AsNoTracking()
+            .Include(x => x.Studio)
+            .Include(x => x.Status)
+            .SingleOrDefaultAsync(x => x.Id == upit.SalaId, cancellationToken)
+            ?? throw new EntitetNijePronadjenException($"Sala {upit.SalaId} nije pronađena.");
+        if (sala.Status.Kod != "AKTIVNA")
+        {
+            return [];
+        }
+
+        var zona = TimeZoneInfo.FindSystemTimeZoneById(sala.Studio.VremenskaZona);
+        var lokalniOd = upit.Datum.ToDateTime(sala.Studio.RadnoVrijemeOd, DateTimeKind.Unspecified);
+        var lokalniDo = upit.Datum.ToDateTime(sala.Studio.RadnoVrijemeDo, DateTimeKind.Unspecified);
+        var danOdUtc = TimeZoneInfo.ConvertTimeToUtc(lokalniOd, zona);
+        var danDoUtc = TimeZoneInfo.ConvertTimeToUtc(lokalniDo, zona);
+        var zauzeti = await dbContext.Rezervacije.AsNoTracking()
+            .Where(x => x.SalaId == upit.SalaId
+                        && AktivniStatusi.Contains(x.Status.Kod)
+                        && x.TerminOdUtc < danDoUtc
+                        && danOdUtc < x.TerminDoUtc)
+            .Select(x => new { x.TerminOdUtc, x.TerminDoUtc })
+            .ToArrayAsync(cancellationToken);
+
+        var rezultat = new List<SlobodanTerminDto>();
+        var trajanje = TimeSpan.FromMinutes(upit.TrajanjeMinuta);
+        var korak = TimeSpan.FromMinutes(upit.KorakMinuta);
+        var sadaUtc = timeProvider.GetUtcNow().UtcDateTime;
+        for (var pocetak = danOdUtc; pocetak.Add(trajanje) <= danDoUtc; pocetak = pocetak.Add(korak))
+        {
+            var kraj = pocetak.Add(trajanje);
+            if (pocetak > sadaUtc && !zauzeti.Any(x => pocetak < x.TerminDoUtc && x.TerminOdUtc < kraj))
+            {
+                rezultat.Add(new SlobodanTerminDto(pocetak, kraj));
+            }
+        }
+
+        return rezultat;
+    }
+
+    private IQueryable<Rezervacija> UpitRezervacije() => dbContext.Rezervacije
+        .Include(x => x.Sala).ThenInclude(x => x.Studio)
+        .Include(x => x.Bend)
+        .Include(x => x.Status)
+        .Include(x => x.Stavke).ThenInclude(x => x.Artikal);
 
     private async Task OsigurajSlobodanTerminAsync(
         int salaId,
@@ -181,45 +308,30 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
         int? izuzmiRezervacijuId,
         CancellationToken cancellationToken)
     {
-        var preklapanjePostoji = await dbContext.Rezervacije.AnyAsync(
+        var preklapanje = await dbContext.Rezervacije.AnyAsync(
             x => x.SalaId == salaId
                  && (!izuzmiRezervacijuId.HasValue || x.Id != izuzmiRezervacijuId.Value)
                  && AktivniStatusi.Contains(x.Status.Kod)
                  && x.TerminOdUtc < terminDoUtc
                  && terminOdUtc < x.TerminDoUtc,
             cancellationToken);
-
-        if (preklapanjePostoji)
+        if (preklapanje)
         {
             throw new TerminNijeDostupanException("Odabrana sala je već rezervisana u dijelu traženog termina.");
         }
     }
 
     private async Task<List<StavkaRezervacije>> KreirajStavkeAsync(
-        NovaRezervacija zahtjev,
+        KreirajRezervacijuCommand zahtjev,
         decimal trajanjeSati,
         CancellationToken cancellationToken)
     {
-        var opremaIds = zahtjev.Stavke
-            .Where(x => x.OpremaId.HasValue)
-            .Select(x => x.OpremaId!.Value)
-            .Distinct()
-            .ToArray();
-        var artikalIds = zahtjev.Stavke
-            .Where(x => x.ArtikalId.HasValue)
-            .Select(x => x.ArtikalId!.Value)
-            .Distinct()
-            .ToArray();
-
-        var oprema = await dbContext.Oprema
-            .Include(x => x.Status)
-            .Where(x => opremaIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, cancellationToken);
-        var artikli = await dbContext.Artikli
-            .Include(x => x.Status)
-            .Where(x => artikalIds.Contains(x.Id))
-            .ToDictionaryAsync(x => x.Id, cancellationToken);
-
+        var opremaIds = zahtjev.Stavke.Where(x => x.OpremaId.HasValue).Select(x => x.OpremaId!.Value).ToArray();
+        var artikalIds = zahtjev.Stavke.Where(x => x.ArtikalId.HasValue).Select(x => x.ArtikalId!.Value).ToArray();
+        var oprema = await dbContext.Oprema.Include(x => x.Status)
+            .Where(x => opremaIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
+        var artikli = await dbContext.Artikli.Include(x => x.Status)
+            .Where(x => artikalIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
         if (oprema.Count != opremaIds.Length || artikli.Count != artikalIds.Length)
         {
             throw new EntitetNijePronadjenException("Jedna ili više odabranih stavki ne postoje.");
@@ -231,11 +343,10 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
             zahtjev.TerminDoUtc,
             null,
             cancellationToken);
-
         var rezultat = new List<StavkaRezervacije>();
-        foreach (var trazenaStavka in zahtjev.Stavke)
+        foreach (var trazena in zahtjev.Stavke)
         {
-            if (trazenaStavka.OpremaId is int opremaId)
+            if (trazena.OpremaId is int opremaId)
             {
                 var entitet = oprema[opremaId];
                 if (entitet.Status.Kod != "DOSTUPNA")
@@ -247,64 +358,36 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
                 {
                     OpremaId = entitet.Id,
                     Naziv = entitet.Naziv,
-                    Kolicina = trazenaStavka.Kolicina,
+                    Kolicina = 1,
                     JedinicnaCijena = entitet.CijenaNajmaPoSatu,
                     BrojSati = trajanjeSati,
-                    UkupnaCijena = decimal.Round(
-                        entitet.CijenaNajmaPoSatu * trazenaStavka.Kolicina * trajanjeSati,
-                        2,
-                        MidpointRounding.AwayFromZero)
+                    UkupnaCijena = decimal.Round(entitet.CijenaNajmaPoSatu * trajanjeSati, 2)
                 });
             }
-            else if (trazenaStavka.ArtikalId is int artikalId)
+            else if (trazena.ArtikalId is int artikalId)
             {
                 var entitet = artikli[artikalId];
-                if (entitet.Status.Kod != "AKTIVAN" || entitet.KolicinaNaStanju < trazenaStavka.Kolicina)
+                if (entitet.Status.Kod != "AKTIVAN" || entitet.KolicinaNaStanju < trazena.Kolicina)
                 {
-                    throw new TerminNijeDostupanException($"Artikal '{entitet.Naziv}' nema dovoljnu dostupnu zalihu.");
+                    throw new TerminNijeDostupanException($"Artikal '{entitet.Naziv}' nema dovoljnu zalihu.");
                 }
 
+                entitet.KolicinaNaStanju -= trazena.Kolicina;
                 rezultat.Add(new StavkaRezervacije
                 {
                     ArtikalId = entitet.Id,
+                    Artikal = entitet,
                     Naziv = entitet.Naziv,
-                    Kolicina = trazenaStavka.Kolicina,
+                    Kolicina = trazena.Kolicina,
                     JedinicnaCijena = entitet.CijenaKupovine,
                     BrojSati = 0,
-                    UkupnaCijena = decimal.Round(
-                        entitet.CijenaKupovine * trazenaStavka.Kolicina,
-                        2,
-                        MidpointRounding.AwayFromZero)
+                    UkupnaCijena = decimal.Round(entitet.CijenaKupovine * trazena.Kolicina, 2)
                 });
             }
         }
 
         return rezultat;
     }
-
-    private static void ProvjeriStavke(IReadOnlyCollection<NovaStavkaRezervacije> stavke)
-    {
-        foreach (var stavka in stavke)
-        {
-            if (stavka.Kolicina <= 0)
-            {
-                throw new ArgumentException("Količina stavke mora biti veća od nule.");
-            }
-
-            if (stavka.OpremaId.HasValue == stavka.ArtikalId.HasValue)
-            {
-                throw new ArgumentException("Stavka mora sadržati ili opremu ili artikal, ali ne oboje.");
-            }
-
-            if (stavka.OpremaId.HasValue && stavka.Kolicina != 1)
-            {
-                throw new ArgumentException("Inventarski komad opreme može se dodati samo jednom.");
-            }
-        }
-    }
-
-    private static decimal TrajanjeUSatima(DateTime terminOdUtc, DateTime terminDoUtc) =>
-        decimal.Round((decimal)(terminDoUtc - terminOdUtc).TotalHours, 2, MidpointRounding.AwayFromZero);
 
     private async Task OsigurajDostupnostOpremeAsync(
         int[] opremaIds,
@@ -318,23 +401,138 @@ public sealed class RezervacijaService(OpenAmpDbContext dbContext) : IRezervacij
             return;
         }
 
-        var zauzetaOprema = await dbContext.StavkeRezervacija
+        var zauzeta = await dbContext.StavkeRezervacija
             .Where(x => x.OpremaId.HasValue
                         && opremaIds.Contains(x.OpremaId.Value)
                         && (!izuzmiRezervacijuId.HasValue || x.RezervacijaId != izuzmiRezervacijuId.Value)
                         && AktivniStatusi.Contains(x.Rezervacija.Status.Kod)
                         && x.Rezervacija.TerminOdUtc < terminDoUtc
                         && terminOdUtc < x.Rezervacija.TerminDoUtc)
-            .Select(x => x.OpremaId!.Value)
-            .Distinct()
-            .ToArrayAsync(cancellationToken);
-
-        if (zauzetaOprema.Length > 0)
+            .Select(x => x.OpremaId!.Value).Distinct().ToArrayAsync(cancellationToken);
+        if (zauzeta.Length > 0)
         {
-            throw new TerminNijeDostupanException(
-                $"Oprema nije dostupna u traženom terminu: {string.Join(", ", zauzetaOprema)}.");
+            throw new TerminNijeDostupanException($"Oprema nije dostupna: {string.Join(", ", zauzeta)}.");
         }
     }
+
+    private async Task SacuvajSaConcurrencyProvjeromAsync(
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transakcija,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            if (transakcija is not null)
+            {
+                await transakcija.CommitAsync(cancellationToken);
+            }
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            if (transakcija is not null)
+            {
+                await transakcija.RollbackAsync(cancellationToken);
+            }
+
+            throw new KonfliktKonkurentnostiException(
+                "Rezervaciju je u međuvremenu izmijenio drugi korisnik.", exception);
+        }
+    }
+
+    private static decimal IzracunajRefund(Rezervacija rezervacija, DateTime sadaUtc)
+    {
+        if (rezervacija.Status.Kod != "PLACENA")
+        {
+            return 0;
+        }
+
+        var studio = rezervacija.Sala.Studio;
+        return OtkazivanjePravila.IzracunajPovrat(
+            rezervacija.UkupnaCijena,
+            rezervacija.TerminOdUtc,
+            sadaUtc,
+            studio.PuniPovratDoSati,
+            studio.DjelimicniPovratDoSati,
+            studio.DjelimicniPovratPostotak);
+    }
+
+    private static void ProvjeriStavke(IReadOnlyCollection<NovaStavkaRezervacije> stavke)
+    {
+        foreach (var stavka in stavke)
+        {
+            if (stavka.Kolicina <= 0 || stavka.OpremaId.HasValue == stavka.ArtikalId.HasValue)
+            {
+                throw new ArgumentException("Svaka stavka mora imati pozitivan iznos i tačno jedan tip.");
+            }
+
+            if (stavka.OpremaId.HasValue && stavka.Kolicina != 1)
+            {
+                throw new ArgumentException("Inventarski komad opreme može se dodati samo jednom.");
+            }
+        }
+
+        if (stavke.Where(x => x.OpremaId.HasValue).GroupBy(x => x.OpremaId).Any(x => x.Count() > 1)
+            || stavke.Where(x => x.ArtikalId.HasValue).GroupBy(x => x.ArtikalId).Any(x => x.Count() > 1))
+        {
+            throw new ArgumentException("Ista oprema ili artikal ne smiju biti navedeni više puta.");
+        }
+    }
+
+    private static void OsigurajVlasnistvo(Rezervacija rezervacija, int korisnikId)
+    {
+        if (rezervacija.KreiraoKorisnikId != korisnikId)
+        {
+            throw new NedozvoljenaOperacijaException("Nemate pristup ovoj rezervaciji.");
+        }
+    }
+
+    private static void OsigurajUnutarRadnogVremena(
+        Studio studio,
+        DateTime terminOdUtc,
+        DateTime terminDoUtc)
+    {
+        var zona = TimeZoneInfo.FindSystemTimeZoneById(studio.VremenskaZona);
+        var lokalniOd = TimeZoneInfo.ConvertTimeFromUtc(terminOdUtc, zona);
+        var lokalniDo = TimeZoneInfo.ConvertTimeFromUtc(terminDoUtc, zona);
+        if (DateOnly.FromDateTime(lokalniOd) != DateOnly.FromDateTime(lokalniDo)
+            || TimeOnly.FromDateTime(lokalniOd) < studio.RadnoVrijemeOd
+            || TimeOnly.FromDateTime(lokalniDo) > studio.RadnoVrijemeDo)
+        {
+            throw new NedozvoljenaOperacijaException("Termin mora biti unutar radnog vremena studija.");
+        }
+    }
+
+    private static byte[] DekodirajRowVersion(string rowVersion)
+    {
+        try
+        {
+            var vrijednost = Convert.FromBase64String(rowVersion);
+            return vrijednost.Length == 0 ? throw new FormatException() : vrijednost;
+        }
+        catch (FormatException)
+        {
+            throw new ArgumentException("RowVersion mora biti validan Base64 string.", nameof(rowVersion));
+        }
+    }
+
+    private static RezervacijaDto Mapiraj(Rezervacija rezervacija) => new(
+        rezervacija.Id,
+        rezervacija.SalaId,
+        rezervacija.Sala.Naziv,
+        rezervacija.BendId,
+        rezervacija.Bend.Naziv,
+        rezervacija.TerminOdUtc,
+        rezervacija.TerminDoUtc,
+        rezervacija.UkupnaCijena,
+        rezervacija.Status.Naziv,
+        rezervacija.Napomena,
+        Convert.ToBase64String(rezervacija.RowVersion),
+        rezervacija.Stavke.Select(x => new StavkaRezervacijeDto(
+            x.Id, x.OpremaId, x.ArtikalId, x.Naziv, x.Kolicina,
+            x.JedinicnaCijena, x.BrojSati, x.UkupnaCijena)).ToArray());
+
+    private static decimal TrajanjeUSatima(DateTime odUtc, DateTime doUtc) =>
+        decimal.Round((decimal)(doUtc - odUtc).TotalHours, 2, MidpointRounding.AwayFromZero);
 
     private static bool JeSqlServerDeadlock(Exception exception)
     {

@@ -1,62 +1,86 @@
 # OpenAmp
 
-OpenAmp je platforma za rezervaciju sala za muzičke probe, upravljanje bendovima, studijima, opremom i potrošnim artiklima. Ovaj repozitorij trenutno sadrži **Fazu 1: bazu podataka i arhitekturu projekta**.
+OpenAmp je platforma za rezervaciju sala za muzičke probe, upravljanje bendovima, studijima, opremom i potrošnim artiklima.
 
-## Šta je implementirano
+Repozitorij trenutno sadrži:
 
-- .NET 8 solution sa slojevima `Domain`, `Application` i `Infrastructure`
-- kompletan Entity Framework Core 8 model za SQL Server
-- Fluent API konfiguracije svih ključeva, relacija, indeksa i ograničenja
-- šifarnici i seed podaci za uloge, statuse, žanrove, instrumente i kategorije
-- testni studiji, sale, galerija, oprema i artikli
-- inicijalna EF Core migracija
-- optimistic concurrency preko `Rezervacija.RowVersion`
-- atomska zaštita od preklapanja termina u `SERIALIZABLE` transakciji
-- provjera zauzetosti odabrane opreme u istom terminu
+- FAZU 1: SQL Server bazu, EF Core model, migracije i seed podatke
+- FAZU 2: REST API, JWT autentikaciju, logiku rezervacija i Stripe plaćanje
+
+## Implementirano
+
+- .NET 8 slojevita arhitektura: \`Domain\`, \`Application\`, \`Infrastructure\` i \`Api\`
+- Entity Framework Core 8 i SQL Server 2022
+- Fluent API konfiguracije ključeva, relacija, indeksa i ograničenja
+- seed podaci za uloge, statuse, žanrove, instrumente, studije, sale i inventar
+- JWT registracija, prijava i rotacija refresh tokena
+- PBKDF2-SHA512 hashiranje lozinki i hashirani refresh tokeni u bazi
+- provjera slobodnih termina sale i opreme
+- kalkulacija cijene sale, najma opreme i kupljenih artikala
+- izmjena i otkazivanje rezervacije uz optimistic concurrency (\`RowVersion\`)
+- Stripe Payment Intents, potpisani webhook i automatski refund
+- Swagger/OpenAPI i health endpoint
+- CQRS handleri, DTO modeli i servisni/repository ugovori
 - Mermaid [ERD](docs/erd.md)
-- SQL Server 2022 Docker Compose konfiguracija
 
 ## Struktura
 
-```text
+\`\`\`text
 src/
   OpenAmp.Domain/          Entiteti i domenska pravila
-  OpenAmp.Application/     Use-case ugovori i aplikacijski izuzeci
-  OpenAmp.Infrastructure/  EF Core, SQL Server, seed i servis rezervacija
+  OpenAmp.Application/     DTO modeli, CQRS komande/upiti i ugovori
+  OpenAmp.Infrastructure/  EF Core, autentikacija, rezervacije i Stripe
+  OpenAmp.Api/             REST kontroleri, JWT, Swagger i middleware
 tests/
   OpenAmp.Infrastructure.Tests/
 docs/
   erd.md
-```
+  phase2-api.md
+\`\`\`
 
-## Pokretanje baze
+## Pokretanje
 
-1. Kopirati `.env.example` u `.env` i po potrebi promijeniti razvojnu lozinku.
-2. Pokrenuti SQL Server:
+Za razvoj su potrebni .NET 8 SDK i Docker Desktop.
 
-   ```powershell
+1. Pokrenuti SQL Server:
+
+   \`\`\`powershell
    docker compose up -d
-   ```
+   docker compose ps
+   \`\`\`
 
-3. Postaviti connection string i primijeniti migraciju:
+2. Pokrenuti API:
 
-   ```powershell
-   $env:OPENAMP_CONNECTION_STRING='Server=localhost,1433;Database=OpenAmp;User Id=sa;Password=OpenAmp_Dev123!;TrustServerCertificate=True;Encrypt=False'
-   dotnet ef database update --project src/OpenAmp.Infrastructure
-   ```
+   \`\`\`powershell
+   dotnet restore
+   dotnet run --project src/OpenAmp.Api --launch-profile https
+   \`\`\`
+
+3. Otvoriti:
+
+   - Swagger: \`https://localhost:7149/swagger\`
+   - health check: \`https://localhost:7149/health\`
+
+U Development okruženju API automatski primjenjuje EF Core migracije. Razvojni SQL password i JWT ključ iz \`appsettings.Development.json\` služe samo za lokalni rad i moraju se zamijeniti prije deploymenta.
+
+Detaljni endpointi i Stripe konfiguracija nalaze se u [uputama za FAZU 2](docs/phase2-api.md).
+
+## Ručno izvršavanje migracija
+
+\`\`\`powershell
+$env:OPENAMP_CONNECTION_STRING='Server=localhost,1433;Database=OpenAmp;User Id=sa;Password=OpenAmp_Dev123!;TrustServerCertificate=True;Encrypt=False'
+dotnet tool restore
+dotnet tool run dotnet-ef database update --project src/OpenAmp.Infrastructure
+\`\`\`
 
 ## Build i testovi
 
-```powershell
+\`\`\`powershell
 dotnet restore
-dotnet build --no-restore
-dotnet test --no-build
-```
+dotnet build --configuration Release --no-restore
+dotnet test --configuration Release --no-build
+\`\`\`
 
-## Zaštita od dvostruke rezervacije
+## Zaštita rezervacija
 
-`RowVersion` rješava optimistic concurrency pri izmjeni postojeće rezervacije. Dva istovremena kreiranja su zaseban problem jer oba rade `INSERT`; zato `RezervacijaService` provjeru preklapanja i upis izvršava u SQL Server `SERIALIZABLE` transakciji. Indeks nad `(SalaId, TerminOdUtc, TerminDoUtc)` omogućava efikasno range zaključavanje. Granice termina su poluotvorene (`[od, do)`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.
-
-## Napomena o seed podacima
-
-Seed podaci su demonstracijski. URL-ovi slika koriste lokalnu `example.openamp.local` domenu, a razvojni SQL password mora se promijeniti prije bilo kakvog javnog ili produkcijskog deploymenta.
+\`RowVersion\` otkriva konkurentnu izmjenu postojeće rezervacije. Kreiranje i provjera preklapanja izvršavaju se u SQL Server \`SERIALIZABLE\` transakciji. Granice termina su poluotvorene (\`[od, do)\`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.

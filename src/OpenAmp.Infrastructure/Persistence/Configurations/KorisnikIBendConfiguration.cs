@@ -42,6 +42,28 @@ internal sealed class KorisnikInstrumentConfiguration : IEntityTypeConfiguration
     }
 }
 
+internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
+{
+    public void Configure(EntityTypeBuilder<RefreshToken> builder)
+    {
+        builder.ToTable("RefreshTokeni", table =>
+            table.HasCheckConstraint("CK_RefreshTokeni_Datum", "[IsticeUtc] > [KreiranUtc]"));
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.TokenHash).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.ZamijenjenTokenHash).HasMaxLength(64);
+        builder.Property(x => x.KreiranSaIpAdrese).HasMaxLength(64);
+        builder.Property(x => x.KreiranUtc).HasPrecision(0);
+        builder.Property(x => x.IsticeUtc).HasPrecision(0);
+        builder.Property(x => x.OpozvanUtc).HasPrecision(0);
+        builder.HasIndex(x => x.TokenHash).IsUnique();
+        builder.HasIndex(x => new { x.KorisnikId, x.IsticeUtc });
+        builder.HasOne(x => x.Korisnik)
+            .WithMany(x => x.RefreshTokeni)
+            .HasForeignKey(x => x.KorisnikId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 internal sealed class BendConfiguration : IEntityTypeConfiguration<Bend>
 {
     public void Configure(EntityTypeBuilder<Bend> builder)

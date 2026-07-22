@@ -43,6 +43,27 @@ public sealed class ModelConfigurationTests
             key?.Properties.Select(x => x.Name).ToArray());
     }
 
+    [Fact]
+    public void RefreshTokenHashJeJedinstven()
+    {
+        using var context = KreirajSqlServerContext();
+        var entity = context.Model.FindEntityType(typeof(RefreshToken));
+        var index = entity?.GetIndexes().SingleOrDefault(x =>
+            x.Properties.Select(p => p.Name).SequenceEqual([nameof(RefreshToken.TokenHash)]));
+
+        Assert.NotNull(index);
+        Assert.True(index.IsUnique);
+    }
+
+    [Fact]
+    public void StripeWebhookDogadjajKoristiStripeIdKaoPrimarniKljuc()
+    {
+        using var context = KreirajSqlServerContext();
+        var key = context.Model.FindEntityType(typeof(StripeWebhookDogadjaj))?.FindPrimaryKey();
+
+        Assert.Equal([nameof(StripeWebhookDogadjaj.Id)], key?.Properties.Select(x => x.Name).ToArray());
+    }
+
     private static OpenAmpDbContext KreirajSqlServerContext()
     {
         var options = new DbContextOptionsBuilder<OpenAmpDbContext>()

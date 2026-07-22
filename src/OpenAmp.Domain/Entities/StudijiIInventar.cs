@@ -10,6 +10,12 @@ public sealed class Studio
     public string? Telefon { get; set; }
     public string? Email { get; set; }
     public bool Aktivan { get; set; } = true;
+    public string VremenskaZona { get; set; } = "Europe/Sarajevo";
+    public TimeOnly RadnoVrijemeOd { get; set; } = new(8, 0);
+    public TimeOnly RadnoVrijemeDo { get; set; } = new(23, 0);
+    public int PuniPovratDoSati { get; set; } = 24;
+    public int DjelimicniPovratDoSati { get; set; } = 12;
+    public int DjelimicniPovratPostotak { get; set; } = 50;
     public int? VlasnikId { get; set; }
     public Korisnik? Vlasnik { get; set; }
     public ICollection<Sala> Sale { get; set; } = [];

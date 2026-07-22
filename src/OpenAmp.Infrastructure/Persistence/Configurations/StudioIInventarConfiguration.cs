@@ -9,7 +9,12 @@ internal sealed class StudioConfiguration : IEntityTypeConfiguration<Studio>
 {
     public void Configure(EntityTypeBuilder<Studio> builder)
     {
-        builder.ToTable("Studiji");
+        builder.ToTable("Studiji", table =>
+        {
+            table.HasCheckConstraint("CK_Studiji_PovratSati", "[PuniPovratDoSati] >= [DjelimicniPovratDoSati] AND [DjelimicniPovratDoSati] >= 0");
+            table.HasCheckConstraint("CK_Studiji_PovratPostotak", "[DjelimicniPovratPostotak] BETWEEN 0 AND 100");
+            table.HasCheckConstraint("CK_Studiji_RadnoVrijeme", "[RadnoVrijemeDo] > [RadnoVrijemeOd]");
+        });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Naziv).HasMaxLength(150).IsRequired();
         builder.Property(x => x.Opis).HasMaxLength(3000);
@@ -17,6 +22,9 @@ internal sealed class StudioConfiguration : IEntityTypeConfiguration<Studio>
         builder.Property(x => x.Grad).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Telefon).HasMaxLength(30);
         builder.Property(x => x.Email).HasMaxLength(320);
+        builder.Property(x => x.VremenskaZona).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.RadnoVrijemeOd).HasColumnType("time(0)");
+        builder.Property(x => x.RadnoVrijemeDo).HasColumnType("time(0)");
         builder.HasIndex(x => new { x.Grad, x.Naziv });
         builder.HasOne(x => x.Vlasnik)
             .WithMany(x => x.Studiji)

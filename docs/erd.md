@@ -1,8 +1,9 @@
-# OpenAmp ERD — Faza 1
+# OpenAmp ERD — Faze 1 i 2
 
-```mermaid
+\`\`\`mermaid
 erDiagram
     ULOGA ||--o{ KORISNIK : ima
+    KORISNIK ||--o{ REFRESH_TOKEN : posjeduje
     KORISNIK ||--o{ KORISNIK_INSTRUMENT : svira
     INSTRUMENT ||--o{ KORISNIK_INSTRUMENT : pripada
     KORISNIK ||--o{ BEND : osniva
@@ -45,6 +46,13 @@ erDiagram
         string Telefon
         int UlogaId FK
     }
+    REFRESH_TOKEN {
+        int Id PK
+        int KorisnikId FK
+        string TokenHash UK
+        datetime IsticeUtc
+        datetime OpozvanUtc
+    }
     BEND {
         int Id PK
         string Naziv
@@ -60,9 +68,12 @@ erDiagram
     STUDIO {
         int Id PK
         string Naziv
-        string Adresa
-        string Grad
-        int VlasnikId FK
+        string VremenskaZona
+        time RadnoVrijemeOd
+        time RadnoVrijemeDo
+        int RefundPuniPovratSati
+        int RefundDjelimicniPovratSati
+        int RefundDjelimicniPovratPostotak
     }
     SALA {
         int Id PK
@@ -96,6 +107,9 @@ erDiagram
         datetime TerminDoUtc
         decimal UkupnaCijena
         int StatusRezervacijeId FK
+        string StripePaymentIntentId UK
+        string StripeRefundId
+        decimal RefundiraniIznos
         rowversion RowVersion
     }
     STAVKA_REZERVACIJE {
@@ -115,13 +129,20 @@ erDiagram
         int SalaId FK
         int RezervacijaId FK
     }
-```
+    STRIPE_WEBHOOK_DOGADJAJ {
+        string Id PK
+        string Tip
+        datetime ObradjenUtc
+    }
+\`\`\`
 
 ## Pravila integriteta
 
-- `ClanBenda` i `KorisnikInstrument` koriste kompozitne primarne ključeve.
-- Svaka stavka rezervacije referencira tačno jedan tip: `Oprema` ili `Artikal`.
+- \`ClanBenda\` i \`KorisnikInstrument\` koriste kompozitne primarne ključeve.
+- Svaka stavka rezervacije referencira tačno jedan tip: \`Oprema\` ili \`Artikal\`.
 - Ocjena recenzije je ograničena na raspon 1–5.
-- `TerminDoUtc` mora biti nakon `TerminOdUtc`.
-- `Rezervacija.RowVersion` je SQL Server `rowversion` concurrency token.
-- Indeks `IX_Rezervacije_Sala_Termin` podržava atomsku provjeru preklapanja termina.
+- \`TerminDoUtc\` mora biti nakon \`TerminOdUtc\`.
+- \`Rezervacija.RowVersion\` je SQL Server \`rowversion\` concurrency token.
+- Indeks \`IX_Rezervacije_Sala_Termin\` podržava atomsku provjeru preklapanja termina.
+- Hash refresh tokena je jedinstven i stvarni token se nikada ne čuva u bazi.
+- ID Stripe webhook događaja je primarni ključ za idempotentnu obradu.

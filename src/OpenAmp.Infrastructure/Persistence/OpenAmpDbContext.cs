@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using OpenAmp.Application.Common;
 using OpenAmp.Domain.Entities;
 
 namespace OpenAmp.Infrastructure.Persistence;
 
-public sealed class OpenAmpDbContext(DbContextOptions<OpenAmpDbContext> options) : DbContext(options)
+public sealed class OpenAmpDbContext(DbContextOptions<OpenAmpDbContext> options) : DbContext(options), IUnitOfWork
 {
     public DbSet<Korisnik> Korisnici => Set<Korisnik>();
+    public DbSet<RefreshToken> RefreshTokeni => Set<RefreshToken>();
     public DbSet<Uloga> Uloge => Set<Uloga>();
     public DbSet<Instrument> Instrumenti => Set<Instrument>();
     public DbSet<KorisnikInstrument> KorisnikInstrumenti => Set<KorisnikInstrument>();
@@ -28,6 +30,7 @@ public sealed class OpenAmpDbContext(DbContextOptions<OpenAmpDbContext> options)
     public DbSet<StavkaRezervacije> StavkeRezervacija => Set<StavkaRezervacije>();
     public DbSet<StatusRezervacije> StatusiRezervacija => Set<StatusRezervacije>();
     public DbSet<Recenzija> Recenzije => Set<Recenzija>();
+    public DbSet<StripeWebhookDogadjaj> StripeWebhookDogadjaji => Set<StripeWebhookDogadjaj>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

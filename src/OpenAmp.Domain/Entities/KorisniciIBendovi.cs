@@ -21,6 +21,22 @@ public sealed class Korisnik
     public ICollection<Rezervacija> KreiraneRezervacije { get; set; } = [];
     public ICollection<Recenzija> Recenzije { get; set; } = [];
     public ICollection<Studio> Studiji { get; set; } = [];
+    public ICollection<RefreshToken> RefreshTokeni { get; set; } = [];
+}
+
+public sealed class RefreshToken
+{
+    public int Id { get; set; }
+    public int KorisnikId { get; set; }
+    public Korisnik Korisnik { get; set; } = null!;
+    public string TokenHash { get; set; } = string.Empty;
+    public DateTime KreiranUtc { get; set; }
+    public DateTime IsticeUtc { get; set; }
+    public DateTime? OpozvanUtc { get; set; }
+    public string? ZamijenjenTokenHash { get; set; }
+    public string? KreiranSaIpAdrese { get; set; }
+
+    public bool Aktivan(DateTime sadaUtc) => OpozvanUtc is null && IsticeUtc > sadaUtc;
 }
 
 public sealed class KorisnikInstrument

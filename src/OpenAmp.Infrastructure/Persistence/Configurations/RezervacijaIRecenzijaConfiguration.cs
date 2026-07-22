@@ -19,6 +19,11 @@ internal sealed class RezervacijaConfiguration : IEntityTypeConfiguration<Rezerv
         builder.Property(x => x.UkupnaCijena).HasPrecision(12, 2);
         builder.Property(x => x.Napomena).HasMaxLength(2000);
         builder.Property(x => x.StripePaymentIntentId).HasMaxLength(255);
+        builder.Property(x => x.StripeRefundId).HasMaxLength(255);
+        builder.Property(x => x.RefundiraniIznos).HasPrecision(12, 2);
+        builder.Property(x => x.RefundiranUtc).HasPrecision(0);
+        builder.Property(x => x.OtkazanaUtc).HasPrecision(0);
+        builder.Property(x => x.RazlogOtkazivanja).HasMaxLength(1000);
         builder.Property(x => x.KreiranaUtc).HasPrecision(0);
         builder.Property(x => x.AzuriranaUtc).HasPrecision(0);
         builder.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
@@ -46,6 +51,18 @@ internal sealed class RezervacijaConfiguration : IEntityTypeConfiguration<Rezerv
             .WithMany(x => x.Rezervacije)
             .HasForeignKey(x => x.StatusRezervacijeId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class StripeWebhookDogadjajConfiguration : IEntityTypeConfiguration<StripeWebhookDogadjaj>
+{
+    public void Configure(EntityTypeBuilder<StripeWebhookDogadjaj> builder)
+    {
+        builder.ToTable("StripeWebhookDogadjaji");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).HasMaxLength(255).ValueGeneratedNever();
+        builder.Property(x => x.Tip).HasMaxLength(150).IsRequired();
+        builder.Property(x => x.ObradjenUtc).HasPrecision(0);
     }
 }
 
