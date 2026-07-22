@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8134A55F-360B-4838-9762-1DFE659496F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAmp.Domain", "src\OpenAmp.Domain\OpenAmp.Domain.csproj", "{F6388752-D641-4D42-A0F7-620A48A1C5D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAmp.Application", "src\OpenAmp.Application\OpenAmp.Application.csproj", "{8755202D-7FCB-4F37-957D-FA229CC7CDAB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAmp.Infrastructure", "src\OpenAmp.Infrastructure\OpenAmp.Infrastructure.csproj", "{ACFAED23-4C09-45A7-8551-7CDCCDDC92D8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6B224D65-13A0-4E03-9D6D-7EF829EF544E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAmp.Infrastructure.Tests", "tests\OpenAmp.Infrastructure.Tests\OpenAmp.Infrastructure.Tests.csproj", "{7B39DAF3-58E8-4CC2-8A19-7F800C155033}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F6388752-D641-4D42-A0F7-620A48A1C5D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6388752-D641-4D42-A0F7-620A48A1C5D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6388752-D641-4D42-A0F7-620A48A1C5D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6388752-D641-4D42-A0F7-620A48A1C5D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8755202D-7FCB-4F37-957D-FA229CC7CDAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8755202D-7FCB-4F37-957D-FA229CC7CDAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8755202D-7FCB-4F37-957D-FA229CC7CDAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8755202D-7FCB-4F37-957D-FA229CC7CDAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACFAED23-4C09-45A7-8551-7CDCCDDC92D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACFAED23-4C09-45A7-8551-7CDCCDDC92D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACFAED23-4C09-45A7-8551-7CDCCDDC92D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACFAED23-4C09-45A7-8551-7CDCCDDC92D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B39DAF3-58E8-4CC2-8A19-7F800C155033}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B39DAF3-58E8-4CC2-8A19-7F800C155033}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B39DAF3-58E8-4CC2-8A19-7F800C155033}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B39DAF3-58E8-4CC2-8A19-7F800C155033}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F6388752-D641-4D42-A0F7-620A48A1C5D5} = {8134A55F-360B-4838-9762-1DFE659496F0}
+		{8755202D-7FCB-4F37-957D-FA229CC7CDAB} = {8134A55F-360B-4838-9762-1DFE659496F0}
+		{ACFAED23-4C09-45A7-8551-7CDCCDDC92D8} = {8134A55F-360B-4838-9762-1DFE659496F0}
+		{7B39DAF3-58E8-4CC2-8A19-7F800C155033} = {6B224D65-13A0-4E03-9D6D-7EF829EF544E}
+	EndGlobalSection
+EndGlobal

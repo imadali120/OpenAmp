@@ -1,0 +1,12 @@
+root = true
+
+[*.cs]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[**/Persistence/Migrations/*.cs]
+# EF Core generiše inline nizove za InsertData/CreateIndex pozive.
+dotnet_diagnostic.CA1861.severity = none
