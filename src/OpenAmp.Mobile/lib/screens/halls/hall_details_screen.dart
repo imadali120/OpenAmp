@@ -8,6 +8,7 @@ import 'package:openamp_mobile/widgets/common.dart';
 
 class HallDetailsScreen extends ConsumerWidget {
   const HallDetailsScreen({super.key, required this.hallId});
+
   final int hallId;
 
   @override
@@ -17,13 +18,13 @@ class HallDetailsScreen extends ConsumerWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Detalji sale')),
+              appBar: AppBar(title: const Text('Room details')),
               body: const Center(child: CircularProgressIndicator()),
             );
           }
           if (snapshot.hasError) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Detalji sale')),
+              appBar: AppBar(title: const Text('Room details')),
               body: Padding(
                 padding: const EdgeInsets.all(20),
                 child: ErrorBanner(message: snapshot.error.toString()),
@@ -37,200 +38,427 @@ class HallDetailsScreen extends ConsumerWidget {
 
 class _HallDetailsView extends StatelessWidget {
   const _HallDetailsView({required this.hall});
+
   final HallDetails hall;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Detalji sale'),
-      actions: [
-        IconButton(
-          tooltip: 'Sačuvaj',
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sala je dodana u omiljene.')),
-          ),
-          icon: const Icon(Icons.favorite_border),
-        ),
-      ],
-    ),
     body: CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 245,
-            child: PageView.builder(
-              itemCount: hall.gallery.isEmpty ? 1 : hall.gallery.length,
-              itemBuilder: (_, index) => HallImage(
-                url: hall.gallery.isEmpty ? null : hall.gallery[index],
-                height: 245,
-                borderRadius: 0,
+        SliverAppBar(
+          pinned: true,
+          expandedHeight: 296,
+          backgroundColor: AppColors.ink,
+          foregroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: Text(
+            "ROOM / ${hall.id.toString().padLeft(2, '0')}",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.1,
+            ),
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Sačuvaj',
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Sala je dodana u omiljene.')),
               ),
+              icon: const Icon(Icons.favorite_border_rounded),
+            ),
+            const SizedBox(width: 6),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                PageView.builder(
+                  itemCount: hall.gallery.isEmpty ? 1 : hall.gallery.length,
+                  itemBuilder: (_, index) => HallImage(
+                    url: hall.gallery.isEmpty ? null : hall.gallery[index],
+                    height: 296,
+                    borderRadius: 0,
+                  ),
+                ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black26,
+                        Colors.transparent,
+                        Colors.black87,
+                      ],
+                      stops: [0, .5, 1],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 22,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${hall.studio} / ${hall.city}'.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.signal,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        hall.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 29,
+                          height: 1,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 126),
           sliver: SliverList.list(
             children: [
+              _SpecStrip(hall: hall),
+              if (hall.description != null) ...[
+                const SizedBox(height: 28),
+                const SectionEyebrow('Room notes'),
+                const SizedBox(height: 9),
+                Text(
+                  'O prostoru',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  hall.description!,
+                  style: const TextStyle(
+                    color: AppColors.inkSoft,
+                    fontSize: 15,
+                    height: 1.55,
+                  ),
+                ),
+              ],
+              if (hall.acoustics != null) ...[
+                const SizedBox(height: 17),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink,
+                    borderRadius: BorderRadius.circular(AppRadii.medium),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.graphic_eq_rounded,
+                        color: AppColors.signal,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'ACOUSTIC NOTES',
+                              style: TextStyle(
+                                color: AppColors.signal,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              hall.acoustics!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 29),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SectionEyebrow('Signal chain'),
+                        const SizedBox(height: 8),
                         Text(
-                          hall.name,
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          'Oprema u prostoru',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const SizedBox(height: 4),
-                        Text(hall.studio + ' · ' + hall.city),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        money(hall.hourlyPrice) + '/h',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: AppColors.warning,
-                            size: 18,
-                          ),
-                          Text(
-                            hall.reviewCount == 0
-                                ? ' Nova'
-                                : ' ' + hall.rating.toStringAsFixed(1),
-                          ),
-                        ],
-                      ),
-                    ],
+                  Text(
+                    "${hall.equipment.length.toString().padLeft(2, '0')} ITEMS",
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              _InfoRow(
-                icon: Icons.groups_2_outlined,
-                text: 'Kapacitet do ' + hall.capacity.toString() + ' osoba',
-              ),
-              _InfoRow(
-                icon: Icons.location_on_outlined,
-                text: hall.address + ', ' + hall.city,
-              ),
-              if (hall.description != null) ...[
-                const SizedBox(height: 18),
-                Text(
-                  'O prostoru',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(hall.description!),
-              ],
-              if (hall.acoustics != null) ...[
-                const SizedBox(height: 14),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.spatial_audio_off_outlined),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(hall.acoustics!)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 22),
-              Text(
-                'Osnovna i dodatna oprema',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 10),
-              ...hall.equipment.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Card(
-                    child: ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: Color(0xFFECE9FF),
-                        child: Icon(
-                          Icons.music_note_rounded,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      title: Text(item.name),
-                      subtitle: Text(item.category),
-                      trailing: item.hourlyPrice > 0
-                          ? Text(money(item.hourlyPrice) + '/h')
-                          : const Text('Uključeno'),
-                    ),
-                  ),
-                ),
+              const SizedBox(height: 11),
+              ...hall.equipment.indexed.map(
+                (entry) => _EquipmentRow(index: entry.$1, item: entry.$2),
               ),
               if (hall.reviews.isNotEmpty) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: 28),
+                const SectionEyebrow('From the bands'),
+                const SizedBox(height: 8),
                 Text(
-                  'Iskustva muzičara',
+                  'Šta kažu muzičari',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 11),
                 ...hall.reviews
                     .take(3)
-                    .map(
-                      (review) => ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          child: Text(initials(review.user)),
-                        ),
-                        title: Text(review.user),
-                        subtitle: Text(review.comment ?? 'Bez komentara'),
-                        trailing: Text('★ ' + review.rating.toString()),
-                      ),
-                    ),
+                    .map((review) => _ReviewRow(review: review)),
               ],
             ],
           ),
         ),
       ],
     ),
-    bottomNavigationBar: SafeArea(
-      minimum: const EdgeInsets.fromLTRB(20, 10, 20, 14),
-      child: FilledButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => SlotSelectionScreen(hall: hall),
+    bottomNavigationBar: Container(
+      decoration: const BoxDecoration(
+        color: AppColors.canvas,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      child: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+        child: SignalButton(
+          label: 'Rezerviši · ${money(hall.hourlyPrice)}/h',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => SlotSelectionScreen(hall: hall),
+            ),
           ),
         ),
-        child: const Text('Odaberi termin za probu'),
       ),
     ),
   );
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text});
+class _SpecStrip extends StatelessWidget {
+  const _SpecStrip({required this.hall});
+
+  final HallDetails hall;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: const BoxDecoration(
+      border: Border(
+        top: BorderSide(color: AppColors.ink),
+        bottom: BorderSide(color: AppColors.ink),
+      ),
+    ),
+    child: IntrinsicHeight(
+      child: Row(
+        children: [
+          _Spec(
+            icon: Icons.star_rounded,
+            value: hall.reviewCount == 0
+                ? 'Novo'
+                : hall.rating.toStringAsFixed(1),
+            label: '${hall.reviewCount} recenzija',
+          ),
+          const VerticalDivider(width: 1, color: AppColors.line),
+          _Spec(
+            icon: Icons.groups_2_outlined,
+            value: hall.capacity.toString(),
+            label: 'članova max',
+          ),
+          const VerticalDivider(width: 1, color: AppColors.line),
+          _Spec(
+            icon: Icons.location_on_outlined,
+            value: hall.city,
+            label: hall.address,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _Spec extends StatelessWidget {
+  const _Spec({required this.icon, required this.value, required this.label});
+
   final IconData icon;
-  final String text;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 13),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 17, color: AppColors.signal),
+          const SizedBox(height: 7),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _EquipmentRow extends StatelessWidget {
+  const _EquipmentRow({required this.index, required this.item});
+
+  final int index;
+  final EquipmentItem item;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    decoration: const BoxDecoration(
+      border: Border(bottom: BorderSide(color: AppColors.line)),
+    ),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 32,
+          child: Text(
+            (index + 1).toString().padLeft(2, '0'),
+            style: const TextStyle(
+              color: AppColors.signal,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              Text(
+                item.category.toUpperCase(),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .7,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          item.hourlyPrice > 0 ? '${money(item.hourlyPrice)}/h' : 'UKLJUČENO',
+          style: TextStyle(
+            color: item.hourlyPrice > 0 ? AppColors.ink : AppColors.success,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ReviewRow extends StatelessWidget {
+  const _ReviewRow({required this.review});
+
+  final HallReview review;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Row(
-      children: [
-        Icon(icon, size: 20, color: AppColors.primary),
-        const SizedBox(width: 9),
-        Expanded(child: Text(text)),
-      ],
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.paper,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.ink,
+            foregroundColor: Colors.white,
+            child: Text(
+              initials(review.user),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        review.user,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    Text(
+                      '★ ${review.rating}',
+                      style: const TextStyle(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(review.comment ?? 'Bez komentara'),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

@@ -27,23 +27,34 @@ class BandsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: ref.read(appControllerProvider.notifier).refreshPrivateData,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
+          padding: const EdgeInsets.fromLTRB(18, 5, 18, 24),
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: state.busy
-                    ? null
-                    : () => _showCreateBand(context, ref),
-                icon: const Icon(Icons.add),
-                label: const Text('Novi bend'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 48),
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+            const SectionEyebrow('Band roster'),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Tvoja postava.\nTvoj zvuk.',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ),
-              ),
+                IconButton.filled(
+                  tooltip: 'Novi bend',
+                  onPressed: state.busy
+                      ? null
+                      : () => _showCreateBand(context, ref),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.signal,
+                    foregroundColor: AppColors.ink,
+                    minimumSize: const Size(52, 52),
+                  ),
+                  icon: const Icon(Icons.add_rounded),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 22),
             if (state.error != null) ErrorBanner(message: state.error!),
             if (state.bands.isEmpty)
               const Padding(

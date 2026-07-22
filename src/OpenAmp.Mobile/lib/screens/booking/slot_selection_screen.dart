@@ -10,6 +10,7 @@ import 'package:openamp_mobile/widgets/common.dart';
 
 class SlotSelectionScreen extends ConsumerStatefulWidget {
   const SlotSelectionScreen({super.key, required this.hall});
+
   final HallDetails hall;
 
   @override
@@ -79,53 +80,54 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
     final duration = _start == null || _end == null
         ? 0.0
         : _end!.difference(_start!).inMinutes / 60;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Odabir termina')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 8, 18, 110),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  HallImage(
-                    url: widget.hall.gallery.firstOrNull,
-                    width: 82,
-                    height: 68,
-                    borderRadius: 12,
-                  ),
-                  const SizedBox(width: 13),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.hall.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          money(widget.hall.hourlyPrice) + '/h',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      appBar: AppBar(
+        title: const Text('Odabir termina'),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 18),
+            child: Center(
+              child: Text(
+                'STEP 01 / 03',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 18),
-          Text('Bend', style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
+      body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 116),
+        children: [
+          _RoomTicket(hall: widget.hall),
+          const SizedBox(height: 25),
+          const SectionEyebrow('Ko svira'),
           const SizedBox(height: 8),
+          Text(
+            'Odaberi postavu',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 10),
           if (bands.isEmpty)
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.info_outline),
-                title: Text('Prvo kreirajte bend u tabu Bendovi.'),
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: AppColors.signalSoft,
+                borderRadius: BorderRadius.circular(AppRadii.medium),
+                border: Border.all(color: AppColors.signal),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.signal),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('Prvo kreiraj bend u tabu Bendovi.')),
+                ],
               ),
             )
           else
@@ -138,15 +140,17 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                   .map(
                     (band) => DropdownMenuItem(
                       value: band,
-                      child: Text(band.name + ' · ' + band.genre),
+                      child: Text('${band.name} · ${band.genre}'),
                     ),
                   )
                   .toList(),
               onChanged: (value) => setState(() => _band = value),
             ),
-          const SizedBox(height: 20),
-          Text('Datum', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 9),
+          const SizedBox(height: 26),
+          const SectionEyebrow('Kalendar'),
+          const SizedBox(height: 8),
+          Text('Dan probe', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 11),
           SizedBox(
             height: 76,
             child: ListView.separated(
@@ -160,39 +164,39 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                     value.month == _date.month &&
                     value.day == _date.day;
                 return InkWell(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadii.small),
                   onTap: () => _chooseDate(value),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 58,
+                    duration: const Duration(milliseconds: 160),
+                    width: 57,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: selected ? AppColors.primary : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      color: selected ? AppColors.signal : AppColors.paper,
+                      borderRadius: BorderRadius.circular(AppRadii.small),
                       border: Border.all(
-                        color: selected
-                            ? AppColors.primary
-                            : const Color(0xFFE4E3EC),
+                        color: selected ? AppColors.ink : AppColors.line,
+                        width: selected ? 1.4 : 1,
                       ),
                     ),
                     child: Column(
                       children: [
                         Text(
-                          DateFormat('E', 'bs').format(value),
+                          DateFormat('E', 'bs').format(value).toUpperCase(),
                           style: TextStyle(
                             color: selected
-                                ? Colors.white70
+                                ? AppColors.ink
                                 : AppColors.textMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: .7,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           value.day.toString(),
                           style: TextStyle(
-                            color: selected ? Colors.white : AppColors.text,
-                            fontSize: 20,
+                            color: AppColors.ink,
+                            fontSize: 22,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -203,12 +207,33 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
               },
             ),
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Slobodni termini · ' + DateFormat('dd.MM.').format(_date),
-            style: Theme.of(context).textTheme.titleMedium,
+          const SizedBox(height: 26),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionEyebrow('Grid po satima'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Slobodni slotovi',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                DateFormat('dd.MM.').format(_date),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 11),
           FutureBuilder<List<DateTimeRangeValue>>(
             future: _availability,
             builder: (context, snapshot) {
@@ -239,25 +264,25 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                   final slot = slots[index];
                   final selected = _selected(slot);
                   return InkWell(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadii.small),
                     onTap: () => _toggleSlot(slot),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
+                      duration: const Duration(milliseconds: 140),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        color: selected ? AppColors.ink : AppColors.paper,
+                        borderRadius: BorderRadius.circular(AppRadii.small),
                         border: Border.all(
-                          color: selected
-                              ? AppColors.primary
-                              : const Color(0xFFE4E3EC),
+                          color: selected ? AppColors.signal : AppColors.line,
+                          width: selected ? 2 : 1,
                         ),
                       ),
                       child: Text(
                         DateFormat('HH:mm').format(slot.start.toLocal()),
                         style: TextStyle(
-                          color: selected ? Colors.white : AppColors.text,
-                          fontWeight: FontWeight.w800,
+                          color: selected ? Colors.white : AppColors.ink,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: .2,
                         ),
                       ),
                     ),
@@ -266,52 +291,159 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
               );
             },
           ),
-          const SizedBox(height: 18),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: duration == 0
-                  ? const Text('Odaberite jedan ili više uzastopnih slotova.')
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Trajanje i osnovna cijena'),
-                        const SizedBox(height: 4),
-                        Text(
-                          duration.toStringAsFixed(duration % 1 == 0 ? 0 : 1) +
-                              ' h × ' +
-                              money(widget.hall.hourlyPrice) +
-                              ' = ' +
-                              money(duration * widget.hall.hourlyPrice),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-            ),
-          ),
+          const SizedBox(height: 17),
+          _PricePreview(duration: duration, hall: widget.hall),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(18, 10, 18, 14),
-        child: FilledButton(
-          onPressed: _band == null || _start == null || _end == null
-              ? null
-              : () {
-                  final draft = BookingDraft(
-                    hall: widget.hall,
-                    band: _band,
-                    startsAt: _start,
-                    endsAt: _end,
-                  );
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => AddonsScreen(initialDraft: draft),
-                    ),
-                  );
-                },
-          child: const Text('Nastavi na opremu'),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.canvas,
+          border: Border(top: BorderSide(color: AppColors.line)),
+        ),
+        child: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+          child: SignalButton(
+            label: duration == 0
+                ? 'Odaberi vrijeme'
+                : 'Oprema · ${duration.toStringAsFixed(duration % 1 == 0 ? 0 : 1)} h',
+            onPressed: _band == null || _start == null || _end == null
+                ? null
+                : () {
+                    final draft = BookingDraft(
+                      hall: widget.hall,
+                      band: _band,
+                      startsAt: _start,
+                      endsAt: _end,
+                    );
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AddonsScreen(initialDraft: draft),
+                      ),
+                    );
+                  },
+          ),
         ),
       ),
     );
   }
+}
+
+class _RoomTicket extends StatelessWidget {
+  const _RoomTicket({required this.hall});
+
+  final HallDetails hall;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(11),
+    decoration: BoxDecoration(
+      color: AppColors.ink,
+      borderRadius: BorderRadius.circular(AppRadii.large),
+    ),
+    child: Row(
+      children: [
+        HallImage(
+          url: hall.gallery.firstOrNull,
+          width: 88,
+          height: 78,
+          borderRadius: 11,
+        ),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                hall.studio.toUpperCase(),
+                style: const TextStyle(
+                  color: AppColors.signal,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                hall.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                '${money(hall.hourlyPrice)} / sat',
+                style: const TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _PricePreview extends StatelessWidget {
+  const _PricePreview({required this.duration, required this.hall});
+
+  final double duration;
+  final HallDetails hall;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(15),
+    decoration: BoxDecoration(
+      color: duration == 0 ? AppColors.paper : AppColors.primarySoft,
+      borderRadius: BorderRadius.circular(AppRadii.medium),
+      border: Border.all(
+        color: duration == 0 ? AppColors.line : AppColors.primary,
+      ),
+    ),
+    child: duration == 0
+        ? const Row(
+            children: [
+              Icon(Icons.drag_indicator_rounded, color: AppColors.textMuted),
+              SizedBox(width: 9),
+              Expanded(
+                child: Text('Odaberi jedan ili više uzastopnih slotova.'),
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ROOM SUBTOTAL',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${duration.toStringAsFixed(duration % 1 == 0 ? 0 : 1)} h × ${money(hall.hourlyPrice)}',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                money(duration * hall.hourlyPrice),
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+  );
 }

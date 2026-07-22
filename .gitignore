@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local mobile asset-generation working files
+src/OpenAmp.Mobile/tmp/
+
 # User-specific files
 *.rsuser
 *.suo

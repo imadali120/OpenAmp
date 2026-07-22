@@ -3,35 +3,68 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 
+class OpenAmpMark extends StatelessWidget {
+  const OpenAmpMark({super.key, this.size = 44, this.onDark = false});
+
+  final double size;
+  final bool onDark;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(
+      color: onDark ? AppColors.paper : Colors.white,
+      borderRadius: BorderRadius.circular(size * .25),
+      border: Border.all(
+        color: onDark ? Colors.white24 : AppColors.ink,
+        width: 1.2,
+      ),
+    ),
+    child: ClipRect(
+      child: Transform.scale(
+        scale: 1.62,
+        child: Image.asset(
+          'assets/branding/openamp-mark.png',
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    ),
+  );
+}
+
 class OpenAmpLogo extends StatelessWidget {
-  const OpenAmpLogo({super.key, this.compact = false});
+  const OpenAmpLogo({super.key, this.compact = false, this.onDark = false});
+
   final bool compact;
+  final bool onDark;
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Container(
-        width: compact ? 30 : 42,
-        height: compact ? 30 : 42,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(compact ? 9 : 13),
+      OpenAmpMark(size: compact ? 34 : 48, onDark: onDark),
+      SizedBox(width: compact ? 9 : 12),
+      Text.rich(
+        TextSpan(
+          children: [
+            const TextSpan(text: 'Open'),
+            TextSpan(
+              text: 'Amp',
+              style: TextStyle(
+                color: onDark ? AppColors.signal : AppColors.primary,
+              ),
+            ),
+          ],
         ),
-        child: Icon(
-          Icons.graphic_eq_rounded,
-          color: Colors.white,
-          size: compact ? 18 : 25,
-        ),
-      ),
-      const SizedBox(width: 10),
-      Text(
-        'OpenAmp',
         style: TextStyle(
-          color: AppColors.text,
-          fontSize: compact ? 19 : 27,
+          color: onDark ? Colors.white : AppColors.ink,
+          fontSize: compact ? 19 : 28,
+          height: 1,
           fontWeight: FontWeight.w900,
-          letterSpacing: -0.7,
+          letterSpacing: compact ? -0.7 : -1.2,
         ),
       ),
     ],
@@ -46,8 +79,48 @@ class OpenAmpLoader extends StatelessWidget {
     mainAxisSize: MainAxisSize.min,
     children: [
       OpenAmpLogo(),
-      SizedBox(height: 28),
-      CircularProgressIndicator(color: AppColors.primary),
+      SizedBox(height: 24),
+      SizedBox(
+        width: 44,
+        child: LinearProgressIndicator(
+          minHeight: 4,
+          color: AppColors.signal,
+          backgroundColor: AppColors.paperMuted,
+          borderRadius: BorderRadius.all(Radius.circular(3)),
+        ),
+      ),
+    ],
+  );
+}
+
+class SectionEyebrow extends StatelessWidget {
+  const SectionEyebrow(this.label, {super.key, this.color});
+
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 18,
+        height: 5,
+        decoration: BoxDecoration(
+          color: color ?? AppColors.signal,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: color ?? AppColors.textMuted,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.35,
+        ),
+      ),
     ],
   );
 }
@@ -60,6 +133,7 @@ class HallImage extends StatelessWidget {
     this.width = double.infinity,
     this.borderRadius = 16,
   });
+
   final String? url;
   final double height;
   final double width;
@@ -71,17 +145,22 @@ class HallImage extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
+        color: AppColors.ink,
         borderRadius: BorderRadius.circular(borderRadius),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2A255C), AppColors.primary],
-        ),
       ),
-      child: const Icon(
-        Icons.music_note_rounded,
-        size: 42,
-        color: Colors.white70,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: const _SignalPatternPainter()),
+          ),
+          const Center(
+            child: Icon(
+              Icons.speaker_group_outlined,
+              size: 40,
+              color: AppColors.signal,
+            ),
+          ),
+        ],
       ),
     );
     if (url == null || url!.isEmpty || url!.contains('example.openamp.local')) {
@@ -103,29 +182,48 @@ class HallImage extends StatelessWidget {
 
 class StatusPill extends StatelessWidget {
   const StatusPill({super.key, required this.label, required this.positive});
+
   final String label;
   final bool positive;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-    decoration: BoxDecoration(
-      color: positive ? AppColors.success : AppColors.danger,
-      borderRadius: BorderRadius.circular(999),
-    ),
-    child: Text(
-      label,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 12,
-        fontWeight: FontWeight.w800,
+  Widget build(BuildContext context) {
+    final color = positive ? AppColors.success : AppColors.danger;
+    final background = positive ? AppColors.successSoft : AppColors.dangerSoft;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadii.small),
+        border: Border.all(color: color.withValues(alpha: .38)),
       ),
-    ),
-  );
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: .65,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class ErrorBanner extends StatelessWidget {
   const ErrorBanner({super.key, required this.message, this.onRetry});
+
   final String message;
   final VoidCallback? onRetry;
 
@@ -134,8 +232,9 @@ class ErrorBanner extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: const Color(0xFFFFEAED),
-      borderRadius: BorderRadius.circular(14),
+      color: AppColors.dangerSoft,
+      borderRadius: BorderRadius.circular(AppRadii.medium),
+      border: Border.all(color: AppColors.danger),
     ),
     child: Row(
       children: [
@@ -149,7 +248,76 @@ class ErrorBanner extends StatelessWidget {
   );
 }
 
-String money(num value) => NumberFormat('0.00').format(value) + ' KM';
+class SignalButton extends StatelessWidget {
+  const SignalButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.loading = false,
+    this.icon = Icons.arrow_forward_rounded,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool loading;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => FilledButton(
+    onPressed: loading ? null : onPressed,
+    style: FilledButton.styleFrom(
+      backgroundColor: AppColors.signal,
+      foregroundColor: AppColors.ink,
+    ),
+    child: loading
+        ? const SizedBox(
+            width: 21,
+            height: 21,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.ink,
+            ),
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [Text(label), Icon(icon, size: 20)],
+          ),
+  );
+}
+
+class _SignalPatternPainter extends CustomPainter {
+  const _SignalPatternPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = Colors.white.withValues(alpha: .055)
+      ..strokeWidth = 1;
+    const gap = 18.0;
+    for (double x = -size.height; x < size.width; x += gap) {
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
+    }
+    final signal = Paint()
+      ..color = AppColors.primary.withValues(alpha: .3)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    final center = size.height * .5;
+    for (var i = 0; i < 5; i++) {
+      final h = 8.0 + (2 - (i - 2).abs()) * 6;
+      final x = size.width - 22 - (4 - i) * 7;
+      canvas.drawLine(
+        Offset(x, center - h / 2),
+        Offset(x, center + h / 2),
+        signal,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+String money(num value) => '${NumberFormat('0.00').format(value)} KM';
 
 String initials(String value) {
   final parts = value.trim().split(RegExp(r'\s+'));
