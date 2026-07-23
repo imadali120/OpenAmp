@@ -15,6 +15,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
+  final _username = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _phone = TextEditingController();
@@ -25,6 +26,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void dispose() {
     _firstName.dispose();
     _lastName.dispose();
+    _username.dispose();
     _email.dispose();
     _password.dispose();
     _phone.dispose();
@@ -37,6 +39,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     try {
       if (_register) {
         await controller.register(
+          username: _username.text,
           firstName: _firstName.text,
           lastName: _lastName.text,
           email: _email.text,
@@ -101,7 +104,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         Text(
                           _register
                               ? 'Unesi podatke za novi korisnički račun.'
-                              : 'Unesi email i lozinku.',
+                              : 'Unesi email ili username i lozinku.',
                         ),
                         const SizedBox(height: 20),
                         if (state.error != null)
@@ -117,6 +120,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           child: _register
                               ? Column(
                                   children: [
+                                    TextFormField(
+                                      controller: _username,
+                                      textInputAction: TextInputAction.next,
+                                      autocorrect: false,
+                                      enableSuggestions: false,
+                                      autofillHints: const [
+                                        AutofillHints.newUsername,
+                                      ],
+                                      decoration: const InputDecoration(
+                                        labelText: 'Username',
+                                        prefixIcon: Icon(
+                                          Icons.alternate_email_rounded,
+                                        ),
+                                        helperText:
+                                            '3–30 znakova: mala slova, brojevi, . i _',
+                                      ),
+                                      validator: _validateUsername,
+                                    ),
+                                    const SizedBox(height: 11),
                                     Row(
                                       children: [
                                         Expanded(
@@ -161,17 +183,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         ),
                         TextFormField(
                           controller: _email,
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: _register
+                              ? TextInputType.emailAddress
+                              : TextInputType.text,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.alternate_email_rounded),
+                          decoration: InputDecoration(
+                            labelText: _register
+                                ? 'Email'
+                                : 'Email ili username',
+                            prefixIcon: const Icon(
+                              Icons.alternate_email_rounded,
+                            ),
                           ),
-                          validator: (value) =>
-                              value != null && value.contains('@')
-                              ? null
-                              : 'Unesite ispravan email.',
+                          validator: (value) {
+                            final text = value?.trim() ?? '';
+                            if (_register) {
+                              return text.contains('@')
+                                  ? null
+                                  : 'Unesite ispravan email.';
+                            }
+                            return text.length >= 3
+                                ? null
+                                : 'Unesite email ili username.';
+                          },
                         ),
                         const SizedBox(height: 11),
                         TextFormField(
@@ -193,9 +228,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               ),
                             ),
                           ),
-                          validator: (value) => (value?.length ?? 0) >= 10
-                              ? null
-                              : 'Lozinka mora imati najmanje 10 znakova.',
+                          validator: (value) => _register
+                              ? _validatePassword(value)
+                              : _requiredPassword(value),
                         ),
                         const SizedBox(height: 16),
                         SignalButton(
@@ -227,6 +262,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   String? _required(String? value) =>
       value == null || value.trim().length < 2 ? 'Obavezno polje.' : null;
+
+  String? _requiredPassword(String? value) =>
+      value == null || value.isEmpty ? 'Unesite lozinku.' : null;
+
+  String? _validateUsername(String? value) {
+    final username = value?.trim().toLowerCase() ?? '';
+    return RegExp(r'^[a-z0-9](?:[a-z0-9._]{1,28}[a-z0-9])?$').hasMatch(username)
+        ? null
+        : 'Username nije ispravan.';
+  }
+
+  String? _validatePassword(String? value) {
+    final password = value ?? '';
+    final valid =
+        password.length >= 10 &&
+        password.length <= 128 &&
+        password.contains(RegExp('[A-Z]')) &&
+        password.contains(RegExp('[a-z]')) &&
+        password.contains(RegExp('[0-9]')) &&
+        password.contains(RegExp(r'[^A-Za-z0-9]'));
+    return valid
+        ? null
+        : '10+ znakova, veliko i malo slovo, broj i poseban znak.';
+  }
 }
 
 class _ModeSwitch extends StatelessWidget {

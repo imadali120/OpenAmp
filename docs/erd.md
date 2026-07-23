@@ -1,4 +1,4 @@
-# OpenAmp ERD — Faze 1 i 2
+# OpenAmp ERD — Faze 1–3
 
 ```mermaid
 erDiagram
@@ -13,12 +13,18 @@ erDiagram
     INSTRUMENT ||--o{ CLAN_BENDA : uloga
     BEND ||--o{ POZIVNICA_BENDA : salje
     KORISNIK ||--o{ POZIVNICA_BENDA : poziva
+    KORISNIK ||--o{ POZIVNICA_BENDA : prima
     STATUS_POZIVNICE ||--o{ POZIVNICA_BENDA : status
 
     KORISNIK o|--o{ STUDIO : vlasnik
     STUDIO ||--o{ SALA : sadrzi
     STATUS_SALE ||--o{ SALA : status
     SALA ||--o{ SALA_SLIKA : galerija
+    KORISNIK ||--o{ MEDIJSKA_DATOTEKA : uploaduje
+    MEDIJSKA_DATOTEKA o|--o| KORISNIK : profilna_slika
+    MEDIJSKA_DATOTEKA o|--o| BEND : naslovna_slika
+    MEDIJSKA_DATOTEKA o|--o| STUDIO : naslovna_slika
+    MEDIJSKA_DATOTEKA o|--o{ SALA_SLIKA : sadrzaj
     SALA o|--o{ OPREMA : lokacija
     KATEGORIJA_OPREME ||--o{ OPREMA : kategorija
     STATUS_OPREME ||--o{ OPREMA : status
@@ -39,6 +45,7 @@ erDiagram
 
     KORISNIK {
         int Id PK
+        string Username UK
         string Ime
         string Prezime
         string Email UK
@@ -64,6 +71,14 @@ erDiagram
         int KorisnikId PK_FK
         int InstrumentId FK
         string UlogaUBendu
+    }
+    MEDIJSKA_DATOTEKA {
+        int Id PK
+        string NazivDatoteke
+        string ContentType
+        binary Sadrzaj
+        long Velicina
+        int KreiraoKorisnikId FK
     }
     STUDIO {
         int Id PK
@@ -145,4 +160,6 @@ erDiagram
 - `Rezervacija.RowVersion` je SQL Server `rowversion` concurrency token.
 - Indeks `IX_Rezervacije_Sala_Termin` podržava atomsku provjeru preklapanja termina.
 - Hash refresh tokena je jedinstven i stvarni token se nikada ne čuva u bazi.
+- Username je normalizovan na mala slova i jedinstven; pozivnice za bend vežu se za postojećeg korisnika.
+- JPEG, PNG i WebP slike do 5 MB čuvaju se u `MedijskeDatoteke`.
 - ID Stripe webhook događaja je primarni ključ za idempotentnu obradu.

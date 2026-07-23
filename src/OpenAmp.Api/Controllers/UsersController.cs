@@ -34,6 +34,7 @@ public sealed class UsersController(
         updateHandler.HandleAsync(
             new AzurirajProfilCommand(
                 User.KorisnikId(),
+                request.Username,
                 request.Ime,
                 request.Prezime,
                 request.Telefon,

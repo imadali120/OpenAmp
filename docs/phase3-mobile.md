@@ -7,7 +7,7 @@
 - Dio za REST komunikaciju i automatski refresh JWT tokena
 - Flutter Secure Storage za lokalno čuvanje sesije
 - flutter_stripe PaymentSheet za kartice i 3D Secure
-- Material 3 UI prilagođen mockupima iz poglavlja 4.2
+- Material 3 tamni UI sa neutralnom paletom i OpenAmp narandžastom
 
 ## Ekrani
 
@@ -17,7 +17,7 @@
 4. Termin — bend, sedmodnevni izbor datuma i uzastopni satni slotovi.
 5. Oprema i artikli — dodavanje stavki uz trenutni obračun cijene.
 6. Plaćanje — kreiranje rezervacije, Payment Intenta i prikaz Stripe PaymentSheeta.
-7. Moji bendovi — kreiranje benda, članovi, pozivnice i kodovi za pridruživanje.
+7. Moji bendovi — naslovna fotografija, članovi i pozivnice po usernameu.
 8. Rezervacije — predstojeće probe i historija.
 9. Profil — instrumenti, broj bendova/proba, sati, recenzije i omiljena sala.
 
@@ -29,7 +29,7 @@
 - ocjena i komentar nakon završene plaćene probe
 - trajno sačuvane sale i brzi filter „Sačuvane”
 - lokacija studija otvorena u vanjskoj navigaciji
-- uređivanje profila, fotografije, kontakta i instrumenata
+- uređivanje usernamea, profila, fotografije iz galerije, kontakta i instrumenata
 - postavke push/email obavijesti, jezika i privatnosti profila
 - Android/iOS lokalni podsjetnik dva sata prije probe, sistemska dozvola i testna notifikacija
 - ekran obavijesti sa predstojećim rezervacijama i pozivnicama za bend
@@ -49,13 +49,15 @@
 | GET | `/api/reservations/mine` | Historija korisnika i njegovih bendova |
 | GET | `/api/bands/mine` | Bendovi prijavljenog korisnika |
 | POST | `/api/bands` | Kreiranje benda |
-| POST | `/api/bands/{id}/invitations` | Slanje pozivnice emailom |
+| POST | `/api/bands/{id}/invitations` | Slanje pozivnice po usernameu |
 | GET | `/api/bands/invitations/received` | Primljene pozivnice |
 | POST | `/api/bands/invitations/{id}/respond` | Prihvatanje ili odbijanje pozivnice |
 | PUT | `/api/bands/{id}` | Uređivanje benda |
 | PUT/DELETE | `/api/bands/{id}/members/{userId}` | Upravljanje članom ili napuštanje benda |
 | GET | `/api/users/me/overview` | Prošireni profil i statistike |
-| PUT | `/api/users/me` | Kontakt, fotografija i instrumenti |
+| PUT | `/api/users/me` | Username, kontakt i instrumenti |
+| POST | `/api/images/profile` | Upload profilne slike u SQL bazu |
+| POST | `/api/images/bands/{bandId}` | Upload naslovne slike benda |
 | POST | `/api/users/me/change-password` | Promjena lozinke |
 | GET/PUT | `/api/users/me/settings` | Notifikacije, jezik i privatnost |
 | GET/PUT/DELETE | `/api/users/me/favorite-halls/{hallId}` | Sačuvane sale |

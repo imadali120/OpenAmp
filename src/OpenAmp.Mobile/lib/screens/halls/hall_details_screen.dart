@@ -322,8 +322,8 @@ class _SpecStrip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     decoration: const BoxDecoration(
       border: Border(
-        top: BorderSide(color: AppColors.ink),
-        bottom: BorderSide(color: AppColors.ink),
+        top: BorderSide(color: AppColors.line),
+        bottom: BorderSide(color: AppColors.line),
       ),
     ),
     child: IntrinsicHeight(
@@ -437,7 +437,7 @@ class _EquipmentRow extends StatelessWidget {
         Text(
           item.hourlyPrice > 0 ? '${money(item.hourlyPrice)}/h' : 'UKLJUČENO',
           style: TextStyle(
-            color: item.hourlyPrice > 0 ? AppColors.ink : AppColors.success,
+            color: item.hourlyPrice > 0 ? AppColors.text : AppColors.success,
             fontSize: 10,
             fontWeight: FontWeight.w900,
           ),

@@ -21,7 +21,14 @@ public sealed class AuthController(
         CancellationToken cancellationToken)
     {
         var response = await registerHandler.HandleAsync(
-            new RegisterCommand(request.Ime, request.Prezime, request.Email, request.Password, request.Telefon, IpAdresa()),
+            new RegisterCommand(
+                request.Username,
+                request.Ime,
+                request.Prezime,
+                request.Email,
+                request.Password,
+                request.Telefon,
+                IpAdresa()),
             cancellationToken);
         return StatusCode(StatusCodes.Status201Created, response);
     }

@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 import 'package:openamp_mobile/models/models.dart';
 import 'package:openamp_mobile/screens/profile/notifications_screen.dart';
@@ -105,10 +108,23 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 7),
                             Text(
+                              '@${profile.username}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.signal,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
                               profile.email,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white60),
+                              style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -153,8 +169,8 @@ class ProfileScreen extends ConsumerWidget {
             Container(
               decoration: const BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: AppColors.ink),
-                  bottom: BorderSide(color: AppColors.ink),
+                  top: BorderSide(color: AppColors.line),
+                  bottom: BorderSide(color: AppColors.line),
                 ),
               ),
               child: IntrinsicHeight(
@@ -262,10 +278,11 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _editProfile(BuildContext context, WidgetRef ref) async {
     final state = ref.read(appControllerProvider);
     final profile = state.profile!;
+    final username = TextEditingController(text: profile.username);
     final firstName = TextEditingController(text: profile.firstName);
     final lastName = TextEditingController(text: profile.lastName);
     final phone = TextEditingController(text: profile.phone);
-    final imageUrl = TextEditingController(text: profile.imageUrl);
+    String? selectedPhotoPath;
     final selected =
         state.lookups?.instruments
             .where((item) => profile.instruments.contains(item.name))
@@ -281,6 +298,59 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                StatefulBuilder(
+                  builder: (context, setPhotoState) => Column(
+                    children: [
+                      Container(
+                        width: 86,
+                        height: 86,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: AppColors.signal,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: selectedPhotoPath != null
+                            ? Image.file(
+                                File(selectedPhotoPath!),
+                                fit: BoxFit.cover,
+                              )
+                            : profile.imageUrl != null
+                            ? Image.network(
+                                profile.imageUrl!,
+                                fit: BoxFit.cover,
+                              )
+                            : Center(
+                                child: _ProfileInitials(name: profile.fullName),
+                              ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final photo = await ImagePicker().pickImage(
+                            source: ImageSource.gallery,
+                            maxWidth: 1600,
+                            maxHeight: 1600,
+                            imageQuality: 88,
+                          );
+                          if (photo != null) {
+                            setPhotoState(() => selectedPhotoPath = photo.path);
+                          }
+                        },
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Odaberi fotografiju'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: username,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    prefixText: '@',
+                  ),
+                ),
+                const SizedBox(height: 10),
                 TextField(
                   controller: firstName,
                   decoration: const InputDecoration(labelText: 'Ime'),
@@ -297,13 +367,6 @@ class ProfileScreen extends ConsumerWidget {
                   decoration: const InputDecoration(labelText: 'Telefon'),
                 ),
                 const SizedBox(height: 10),
-                TextField(
-                  controller: imageUrl,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(
-                    labelText: 'URL profilne fotografije',
-                  ),
-                ),
                 const SizedBox(height: 14),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -321,10 +384,10 @@ class ProfileScreen extends ConsumerWidget {
                     return FilterChip(
                       label: Text(item.name),
                       selected: isSelected,
-                      selectedColor: AppColors.ink,
-                      checkmarkColor: AppColors.signal,
+                      selectedColor: AppColors.primary,
+                      checkmarkColor: AppColors.ink,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.ink,
+                        color: isSelected ? AppColors.ink : AppColors.text,
                         fontWeight: FontWeight.w700,
                       ),
                       onSelected: (value) => setDialogState(
@@ -352,6 +415,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
     if (accepted != true ||
+        !_validUsername(username.text) ||
         firstName.text.trim().length < 2 ||
         lastName.text.trim().length < 2) {
       return;
@@ -360,16 +424,24 @@ class ProfileScreen extends ConsumerWidget {
       await ref
           .read(appControllerProvider.notifier)
           .updateProfile(
+            username: username.text.trim().toLowerCase(),
             firstName: firstName.text.trim(),
             lastName: lastName.text.trim(),
             phone: phone.text.trim().isEmpty ? null : phone.text.trim(),
-            imageUrl: imageUrl.text.trim().isEmpty
-                ? null
-                : imageUrl.text.trim(),
+            imageUrl: null,
             instrumentIds: selected.toList(),
           );
+      if (selectedPhotoPath != null) {
+        await ref
+            .read(appControllerProvider.notifier)
+            .uploadProfilePhoto(selectedPhotoPath!);
+      }
     } catch (_) {}
   }
+
+  bool _validUsername(String value) => RegExp(
+    r'^[a-z0-9](?:[a-z0-9._]{1,28}[a-z0-9])?$',
+  ).hasMatch(value.trim().toLowerCase());
 
   Future<void> _editSettings(BuildContext context, WidgetRef ref) async {
     final current = ref.read(appControllerProvider).settings;
@@ -465,7 +537,10 @@ class ProfileScreen extends ConsumerWidget {
             TextField(
               controller: next,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Nova lozinka'),
+              decoration: const InputDecoration(
+                labelText: 'Nova lozinka',
+                helperText: '10+ znakova, A–Z, a–z, broj i poseban znak',
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -490,11 +565,20 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
     if (accepted != true) return;
-    if (next.text != confirm.text || next.text.length < 10) {
+    final validPassword =
+        next.text.length >= 10 &&
+        next.text.length <= 128 &&
+        next.text.contains(RegExp('[A-Z]')) &&
+        next.text.contains(RegExp('[a-z]')) &&
+        next.text.contains(RegExp('[0-9]')) &&
+        next.text.contains(RegExp(r'[^A-Za-z0-9]'));
+    if (next.text != confirm.text || !validPassword) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Nove lozinke se ne podudaraju ili su prekratke.'),
+            content: Text(
+              'Lozinke se moraju podudarati i sadržavati veliko i malo slovo, broj i poseban znak.',
+            ),
           ),
         );
       }
@@ -561,7 +645,7 @@ class _Stat extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              color: AppColors.ink,
+              color: AppColors.text,
               fontSize: 21,
               fontWeight: FontWeight.w900,
             ),

@@ -98,6 +98,34 @@ public sealed class ModelConfigurationTests
         Assert.Equal("[StripeCustomerId] IS NOT NULL", index?.GetFilter());
     }
 
+    [Fact]
+    public void UsernameJeObavezanIJedinstven()
+    {
+        using var context = KreirajSqlServerContext();
+        var entity = context.Model.FindEntityType(typeof(Korisnik));
+        var property = entity?.FindProperty(nameof(Korisnik.Username));
+        var index = entity?.GetIndexes().Single(x =>
+            x.Properties.Select(p => p.Name).SequenceEqual([nameof(Korisnik.Username)]));
+
+        Assert.False(property?.IsNullable);
+        Assert.Equal(30, property?.GetMaxLength());
+        Assert.True(index?.IsUnique);
+    }
+
+    [Fact]
+    public void MedijskeDatotekeSeCuvajuOdvojenoOdProfila()
+    {
+        using var context = KreirajSqlServerContext();
+        var media = context.Model.FindEntityType(typeof(MedijskaDatoteka));
+        var user = context.Model.FindEntityType(typeof(Korisnik));
+
+        Assert.Equal("MedijskeDatoteke", media?.GetTableName());
+        var content = media?.FindProperty(nameof(MedijskaDatoteka.Sadrzaj));
+        Assert.Equal(typeof(byte[]), content?.ClrType);
+        Assert.False(content?.IsNullable);
+        Assert.NotNull(user?.FindProperty(nameof(Korisnik.ProfilnaSlikaId)));
+    }
+
     private static OpenAmpDbContext KreirajSqlServerContext()
     {
         var options = new DbContextOptionsBuilder<OpenAmpDbContext>()

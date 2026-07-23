@@ -49,7 +49,7 @@ public sealed class BandsController(
         CancellationToken cancellationToken)
     {
         var result = await inviteHandler.HandleAsync(
-            new PosaljiPozivnicuBendaCommand(User.KorisnikId(), id, request.Email),
+            new PosaljiPozivnicuBendaCommand(User.KorisnikId(), id, request.Username),
             cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }

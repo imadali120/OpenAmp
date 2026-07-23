@@ -88,7 +88,7 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                         controller: _search,
                         textInputAction: TextInputAction.search,
                         onSubmitted: (_) => _runSearch(),
-                        style: const TextStyle(color: AppColors.ink),
+                        style: const TextStyle(color: AppColors.text),
                         decoration: InputDecoration(
                           hintText: 'Sala, studio ili grad',
                           prefixIcon: const Icon(Icons.search_rounded),
@@ -277,9 +277,11 @@ class _FilterPill extends StatelessWidget {
       duration: const Duration(milliseconds: 160),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: selected ? AppColors.ink : AppColors.paper,
+        color: selected ? AppColors.primary : AppColors.paper,
         borderRadius: BorderRadius.circular(AppRadii.small),
-        border: Border.all(color: selected ? AppColors.ink : AppColors.line),
+        border: Border.all(
+          color: selected ? AppColors.primary : AppColors.line,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -295,7 +297,7 @@ class _FilterPill extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: selected ? Colors.white : AppColors.ink,
+              color: selected ? AppColors.ink : AppColors.text,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
@@ -351,7 +353,7 @@ class _HallCard extends StatelessWidget {
                         child: Text(
                           "#${number.toString().padLeft(2, '0')}",
                           style: const TextStyle(
-                            color: AppColors.ink,
+                            color: AppColors.textMuted,
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
                             letterSpacing: .7,
@@ -438,7 +440,7 @@ class _HallCard extends StatelessWidget {
                                   ],
                                 ),
                                 style: const TextStyle(
-                                  color: AppColors.ink,
+                                  color: AppColors.text,
                                   fontSize: 17,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -.4,

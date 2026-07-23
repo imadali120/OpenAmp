@@ -9,6 +9,9 @@ public sealed class Studio
     public string Grad { get; set; } = string.Empty;
     public string? Telefon { get; set; }
     public string? Email { get; set; }
+    public string? FotografijaUrl { get; set; }
+    public int? FotografijaId { get; set; }
+    public MedijskaDatoteka? Fotografija { get; set; }
     public bool Aktivan { get; set; } = true;
     public string VremenskaZona { get; set; } = "Europe/Sarajevo";
     public TimeOnly RadnoVrijemeOd { get; set; } = new(8, 0);
@@ -49,6 +52,8 @@ public sealed class SalaSlika
     public int SalaId { get; set; }
     public Sala Sala { get; set; } = null!;
     public string Url { get; set; } = string.Empty;
+    public int? MedijskaDatotekaId { get; set; }
+    public MedijskaDatoteka? MedijskaDatoteka { get; set; }
     public string? AlternativniTekst { get; set; }
     public int Redoslijed { get; set; }
 }

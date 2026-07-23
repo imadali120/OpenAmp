@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 import 'package:openamp_mobile/models/models.dart';
 import 'package:openamp_mobile/state/app_state.dart';
@@ -34,8 +37,8 @@ class BandsScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Bendovi',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    '${state.bands.length} ${state.bands.length == 1 ? 'bend' : 'bendova'}',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 IconButton.filled(
@@ -45,7 +48,7 @@ class BandsScreen extends ConsumerWidget {
                       : () => _showCreateBand(context, ref),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.signal,
-                    foregroundColor: AppColors.ink,
+                    foregroundColor: AppColors.primaryDark,
                     minimumSize: const Size(52, 52),
                   ),
                   icon: const Icon(Icons.add_rounded),
@@ -277,6 +280,7 @@ class BandsScreen extends ConsumerWidget {
     if (lookups == null) return;
     final name = TextEditingController(text: band.name);
     final description = TextEditingController(text: band.description);
+    String? selectedPhotoPath;
     var genre = lookups.genres.firstWhere(
       (item) => item.name == band.genre,
       orElse: () => lookups.genres.first,
@@ -289,6 +293,48 @@ class BandsScreen extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              StatefulBuilder(
+                builder: (context, setPhotoState) => Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 120,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: AppColors.ink,
+                        borderRadius: BorderRadius.circular(AppRadii.medium),
+                      ),
+                      child: selectedPhotoPath != null
+                          ? Image.file(
+                              File(selectedPhotoPath!),
+                              fit: BoxFit.cover,
+                            )
+                          : band.imageUrl != null
+                          ? Image.network(band.imageUrl!, fit: BoxFit.cover)
+                          : const Icon(
+                              Icons.photo_outlined,
+                              color: Colors.white54,
+                              size: 36,
+                            ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final photo = await ImagePicker().pickImage(
+                          source: ImageSource.gallery,
+                          maxWidth: 1800,
+                          maxHeight: 1200,
+                          imageQuality: 88,
+                        );
+                        if (photo != null) {
+                          setPhotoState(() => selectedPhotoPath = photo.path);
+                        }
+                      },
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: const Text('Odaberi naslovnu fotografiju'),
+                    ),
+                  ],
+                ),
+              ),
               TextField(
                 controller: name,
                 decoration: const InputDecoration(labelText: 'Naziv'),
@@ -333,6 +379,11 @@ class BandsScreen extends ConsumerWidget {
       await ref
           .read(appControllerProvider.notifier)
           .updateBand(band.id, name.text, genre.id, description.text);
+      if (selectedPhotoPath != null) {
+        await ref
+            .read(appControllerProvider.notifier)
+            .uploadBandPhoto(band.id, selectedPhotoPath!);
+      }
     } catch (_) {}
   }
 
@@ -470,18 +521,19 @@ class BandsScreen extends ConsumerWidget {
     WidgetRef ref,
     Band band,
   ) async {
-    final email = TextEditingController();
+    final username = TextEditingController();
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Pozovi u ' + band.name),
         content: TextField(
-          controller: email,
+          controller: username,
           autofocus: true,
-          keyboardType: TextInputType.emailAddress,
+          autocorrect: false,
           decoration: const InputDecoration(
-            labelText: 'Email muzičara',
+            labelText: 'Username muzičara',
             prefixIcon: Icon(Icons.alternate_email),
+            helperText: 'Pozvati možeš registrovanog OpenAmp korisnika.',
           ),
         ),
         actions: [
@@ -496,11 +548,15 @@ class BandsScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (accepted != true || !email.text.contains('@')) return;
+    final normalized = username.text.trim().toLowerCase();
+    final valid = RegExp(
+      r'^[a-z0-9](?:[a-z0-9._]{1,28}[a-z0-9])?$',
+    ).hasMatch(normalized);
+    if (accepted != true || !valid) return;
     try {
       await ref
           .read(appControllerProvider.notifier)
-          .inviteMember(band.id, email.text);
+          .inviteMember(band.id, normalized);
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -526,151 +582,289 @@ class _BandCard extends StatelessWidget {
   final ValueChanged<BandMember>? onRemoveMember;
   final VoidCallback? onLeave;
 
-  Color get accent {
-    final genre = band.genre.toLowerCase();
-    if (genre.contains('metal')) return AppColors.primaryDark;
-    if (genre.contains('jazz')) return const Color(0xFF258BCA);
-    if (genre.contains('funk')) return const Color(0xFFE29B20);
-    return AppColors.primary;
-  }
-
   @override
   Widget build(BuildContext context) => Card(
-    child: ExpansionTile(
-      shape: const Border(),
-      leading: Container(
-        width: 6,
-        height: 55,
-        decoration: BoxDecoration(
-          color: accent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              band.name,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: accent,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              band.genre,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-      subtitle: Text(
-        band.reservationCount.toString() +
-            ' rezervacija · ' +
-            band.members.length.toString() +
-            ' članova',
-      ),
-      childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+    clipBehavior: Clip.antiAlias,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...band.members.map(
-          (member) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: CircleAvatar(
-              backgroundColor: member.isFounder
-                  ? accent
-                  : const Color(0xFF2BA875),
-              foregroundColor: Colors.white,
-              child: Text(
-                initials(member.fullName),
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-            title: Text(member.fullName),
-            subtitle: Text(
-              [member.instrument, member.role]
-                  .whereType<String>()
-                  .where((value) => value.isNotEmpty)
-                  .join(' · '),
-            ),
-            trailing: onManageMember == null || member.isFounder
-                ? null
-                : PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') onManageMember!(member);
-                      if (value == 'remove') onRemoveMember!(member);
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Uredi člana')),
-                      PopupMenuItem(
-                        value: 'remove',
-                        child: Text('Ukloni člana'),
-                      ),
-                    ],
+        SizedBox(
+          height: 156,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (band.imageUrl != null)
+                Image.network(
+                  band.imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const _BandCoverFallback(),
+                )
+              else
+                const _BandCoverFallback(),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xE617131F)],
+                    stops: [.25, 1],
                   ),
-          ),
-        ),
-        if (band.invitations.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Aktivne pozivnice',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          ...band.invitations
-              .take(3)
-              .map(
-                (invite) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.mail_outline),
-                  title: Text(invite.email),
-                  subtitle: Text(invite.status + ' · kod ' + invite.code),
                 ),
               ),
-        ],
-        if (onInvite != null) ...[
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonalIcon(
-              onPressed: onInvite,
-              icon: const Icon(Icons.person_add_alt),
-              label: const Text('Pozovi člana'),
-            ),
+              Positioned(
+                left: 17,
+                right: 17,
+                bottom: 15,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      band.genre.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.signal,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      band.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -.7,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-        if (onEdit != null) ...[
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Uredi bend'),
-            ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 15, 17, 17),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (band.description?.trim().isNotEmpty == true) ...[
+                Text(
+                  band.description!,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 14),
+              ],
+              Row(
+                children: [
+                  _BandMetric(
+                    icon: Icons.group_outlined,
+                    value: '${band.members.length}',
+                    label: 'članova',
+                  ),
+                  const SizedBox(width: 18),
+                  _BandMetric(
+                    icon: Icons.calendar_month_outlined,
+                    value: '${band.reservationCount}',
+                    label: 'rezervacija',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              const SectionEyebrow('Postava'),
+              const SizedBox(height: 7),
+              ...band.members.map(
+                (member) => Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(color: AppColors.line)),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 19,
+                        backgroundColor: member.isFounder
+                            ? AppColors.signal
+                            : AppColors.paperMuted,
+                        foregroundColor: member.isFounder
+                            ? AppColors.primaryDark
+                            : AppColors.ink,
+                        child: Text(
+                          initials(member.fullName),
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              member.fullName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              '@${member.username}${_memberDetails(member)}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (member.isFounder)
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 18,
+                          color: AppColors.signal,
+                        )
+                      else if (onManageMember != null)
+                        PopupMenuButton<String>(
+                          tooltip: 'Opcije člana',
+                          onSelected: (value) {
+                            if (value == 'edit') onManageMember!(member);
+                            if (value == 'remove') onRemoveMember!(member);
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Uredi člana'),
+                            ),
+                            PopupMenuItem(
+                              value: 'remove',
+                              child: Text('Ukloni člana'),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (band.invitations.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const SectionEyebrow('Pozivnice'),
+                const SizedBox(height: 6),
+                ...band.invitations
+                    .take(3)
+                    .map(
+                      (invite) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.alternate_email_rounded,
+                              size: 17,
+                              color: AppColors.textMuted,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                invite.username,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              invite.status,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+              ],
+              const SizedBox(height: 17),
+              if (onInvite != null || onEdit != null)
+                Row(
+                  children: [
+                    if (onInvite != null)
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: onInvite,
+                          icon: const Icon(Icons.person_add_alt_1_rounded),
+                          label: const Text('Pozovi'),
+                        ),
+                      ),
+                    if (onInvite != null && onEdit != null)
+                      const SizedBox(width: 9),
+                    if (onEdit != null)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onEdit,
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Uredi'),
+                        ),
+                      ),
+                  ],
+                ),
+              if (onLeave != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: onLeave,
+                    icon: const Icon(Icons.logout_rounded),
+                    label: const Text('Napusti bend'),
+                  ),
+                ),
+            ],
           ),
-        ],
-        if (onLeave != null) ...[
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton.icon(
-              onPressed: onLeave,
-              icon: const Icon(Icons.logout_rounded),
-              label: const Text('Napusti bend'),
-            ),
-          ),
-        ],
+        ),
       ],
+    ),
+  );
+
+  static String _memberDetails(BandMember member) {
+    final details = [
+      member.instrument,
+      member.role,
+    ].whereType<String>().where((value) => value.trim().isNotEmpty).join(' · ');
+    return details.isEmpty ? '' : '  ·  $details';
+  }
+}
+
+class _BandMetric extends StatelessWidget {
+  const _BandMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 18, color: AppColors.signal),
+      const SizedBox(width: 6),
+      Text(
+        '$value $label',
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+      ),
+    ],
+  );
+}
+
+class _BandCoverFallback extends StatelessWidget {
+  const _BandCoverFallback();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: AppColors.primaryDark,
+    alignment: Alignment.topRight,
+    padding: const EdgeInsets.all(16),
+    child: const Icon(
+      Icons.graphic_eq_rounded,
+      color: Color(0x55FFFFFF),
+      size: 58,
     ),
   );
 }

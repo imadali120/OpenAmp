@@ -19,6 +19,12 @@ Swagger je dostupan na `https://localhost:7149/swagger`.
 | GET | `/api/users/me` | Profil prijavljenog korisnika |
 | PUT | `/api/users/me` | Izmjena profila |
 | GET | `/api/users/me/overview` | Profil sa statistikama aktivnosti |
+| POST | `/api/images/profile` | Upload profilne slike u bazu |
+| GET | `/api/images/{id}` | Prikaz slike iz baze |
+
+Registracija zahtijeva jedinstveni username od 3–30 znakova. Dozvoljena su mala slova, brojevi, tačka i donja crta. Lozinka mora imati najmanje 10 znakova te sadržavati veliko slovo, malo slovo, broj i poseban znak. Prijava prihvata email ili username.
+
+Upload podržava JPEG, PNG i WebP do 5 MB. Profilne, bend i studio fotografije te galerija sala čuvaju se u tabeli `MedijskeDatoteke`; domenski entiteti čuvaju referencu na datoteku.
 
 JWT se šalje kroz header:
 

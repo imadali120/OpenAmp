@@ -15,7 +15,9 @@ class OpenAmpApp extends ConsumerWidget {
     return MaterialApp(
       title: 'OpenAmp',
       debugShowCheckedModeBanner: false,
-      theme: OpenAmpTheme.light,
+      theme: OpenAmpTheme.dark,
+      darkTheme: OpenAmpTheme.dark,
+      themeMode: ThemeMode.dark,
       home: !state.initialized
           ? const Scaffold(body: Center(child: OpenAmpLoader()))
           : state.authenticated

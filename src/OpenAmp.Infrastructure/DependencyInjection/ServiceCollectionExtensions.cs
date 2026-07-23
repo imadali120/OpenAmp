@@ -7,6 +7,7 @@ using OpenAmp.Application.Payments;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Infrastructure.Auth;
 using OpenAmp.Infrastructure.Mobile;
+using OpenAmp.Infrastructure.Media;
 using OpenAmp.Infrastructure.Payments;
 using OpenAmp.Infrastructure.Persistence;
 using OpenAmp.Infrastructure.Reservations;
@@ -28,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IRezervacijaService, RezervacijaService>();
         services.AddScoped<IMobileExperienceService, MobileExperienceService>();
+        services.AddScoped<OpenAmp.Application.Media.IMediaService, MediaService>();
         services.AddScoped<IStripeGateway, StripeGateway>();
         services.AddScoped<IPaymentService, PaymentService>();
         return services;

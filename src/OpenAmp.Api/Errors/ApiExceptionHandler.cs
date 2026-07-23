@@ -23,7 +23,8 @@ public sealed partial class ApiExceptionHandler(
             NedozvoljenaOperacijaException => (StatusCodes.Status403Forbidden, "Operacija nije dozvoljena"),
             EntitetNijePronadjenException or KorisnikNijePronadjenException =>
                 (StatusCodes.Status404NotFound, "Resurs nije pronađen"),
-            EmailJeZauzetException or TerminNijeDostupanException or KonfliktKonkurentnostiException =>
+            EmailJeZauzetException or UsernameJeZauzetException
+                or TerminNijeDostupanException or KonfliktKonkurentnostiException =>
                 (StatusCodes.Status409Conflict, "Konflikt podataka"),
             ArgumentException => (StatusCodes.Status400BadRequest, "Neispravan zahtjev"),
             StripeWebhookPotpisException => (StatusCodes.Status400BadRequest, "Neispravan Stripe webhook"),

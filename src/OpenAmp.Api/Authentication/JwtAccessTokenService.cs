@@ -22,6 +22,7 @@ public sealed class JwtAccessTokenService(
         {
             new Claim(JwtRegisteredClaimNames.Sub, korisnik.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             new Claim(JwtRegisteredClaimNames.Email, korisnik.Email),
+            new Claim(JwtRegisteredClaimNames.UniqueName, korisnik.Username),
             new Claim(JwtRegisteredClaimNames.GivenName, korisnik.Ime),
             new Claim(JwtRegisteredClaimNames.FamilyName, korisnik.Prezime),
             new Claim(ClaimTypes.Role, korisnik.Uloga.Kod),

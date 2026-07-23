@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using OpenAmp.Application.Auth;
 using OpenAmp.Application.Mobile;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Domain.Entities;
@@ -204,29 +205,39 @@ public sealed class MobileExperienceService(
             throw new NedozvoljenaOperacijaException("Samo osnivač benda može slati pozivnice.");
         }
 
-        var email = command.Email.Trim().ToLowerInvariant();
-        if (email.Length is < 3 or > 320 || !email.Contains('@'))
-        {
-            throw new ArgumentException("Email adresa nije ispravna.");
-        }
-
+        var username = CredentialPolicy.NormalizeUsername(command.Username);
         var status = await dbContext.StatusiPozivnica.SingleAsync(x => x.Kod == "NA_CEKANJU", cancellationToken);
-        var pozvani = await dbContext.Korisnici.SingleOrDefaultAsync(x => x.Email == email, cancellationToken);
+        var pozvani = await dbContext.Korisnici.SingleOrDefaultAsync(
+            x => x.Username == username && x.Aktivan,
+            cancellationToken) ?? throw new EntitetNijePronadjenException("Korisnik sa tim usernameom nije pronađen.");
+        if (pozvani.Id == command.KorisnikId)
+        {
+            throw new NedozvoljenaOperacijaException("Ne možeš pozvati samog sebe u bend.");
+        }
+        if (await dbContext.ClanoviBenda.AnyAsync(
+                x => x.BendId == bend.Id && x.KorisnikId == pozvani.Id && x.Aktivan,
+                cancellationToken))
+        {
+            throw new InvalidOperationException("Korisnik je već član ovog benda.");
+        }
         var sada = timeProvider.GetUtcNow().UtcDateTime;
         var postojeca = await dbContext.PozivniceBenda.AnyAsync(
-            x => x.BendId == bend.Id && x.Email == email && x.StatusPozivniceId == status.Id && x.IsticeUtc > sada,
+            x => x.BendId == bend.Id
+                && x.PozvaniKorisnikId == pozvani.Id
+                && x.StatusPozivniceId == status.Id
+                && x.IsticeUtc > sada,
             cancellationToken);
         if (postojeca)
         {
-            throw new InvalidOperationException("Aktivna pozivnica za ovaj email već postoji.");
+            throw new InvalidOperationException("Aktivna pozivnica za ovog korisnika već postoji.");
         }
 
         var pozivnica = new PozivnicaBenda
         {
             BendId = bend.Id,
             PozvaoKorisnikId = command.KorisnikId,
-            PozvaniKorisnikId = pozvani?.Id,
-            Email = email,
+            PozvaniKorisnikId = pozvani.Id,
+            Username = username,
             Kod = Convert.ToHexString(RandomNumberGenerator.GetBytes(8)),
             StatusPozivniceId = status.Id,
             Status = status,
@@ -236,22 +247,23 @@ public sealed class MobileExperienceService(
         dbContext.PozivniceBenda.Add(pozivnica);
         await dbContext.SaveChangesAsync(cancellationToken);
         return new PozivnicaBendaDto(
-            pozivnica.Id, pozivnica.Email, pozivnica.Kod, status.Naziv, pozivnica.IsticeUtc);
+            pozivnica.Id, pozivnica.Username, pozivnica.Kod, status.Naziv, pozivnica.IsticeUtc);
     }
 
     public async Task<IReadOnlyCollection<PrimljenaPozivnicaBendaDto>> DohvatiPrimljenePozivniceAsync(
         int korisnikId,
         CancellationToken cancellationToken = default)
     {
-        var korisnik = await dbContext.Korisnici.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == korisnikId, cancellationToken)
-            ?? throw new EntitetNijePronadjenException("Korisnik nije pronađen.");
+        if (!await dbContext.Korisnici.AnyAsync(x => x.Id == korisnikId, cancellationToken))
+        {
+            throw new EntitetNijePronadjenException("Korisnik nije pronađen.");
+        }
         var sada = timeProvider.GetUtcNow().UtcDateTime;
         var pozivnice = await dbContext.PozivniceBenda
             .Include(x => x.Bend).ThenInclude(x => x.Zanr)
             .Include(x => x.PozvaoKorisnik)
             .Include(x => x.Status)
-            .Where(x => x.PozvaniKorisnikId == korisnikId || x.Email == korisnik.Email)
+            .Where(x => x.PozvaniKorisnikId == korisnikId)
             .OrderByDescending(x => x.KreiranaUtc)
             .ToListAsync(cancellationToken);
 
@@ -275,15 +287,17 @@ public sealed class MobileExperienceService(
         OdgovoriNaPozivnicuBendaCommand command,
         CancellationToken cancellationToken = default)
     {
-        var korisnik = await dbContext.Korisnici.SingleOrDefaultAsync(x => x.Id == command.KorisnikId, cancellationToken)
-            ?? throw new EntitetNijePronadjenException("Korisnik nije pronađen.");
+        if (!await dbContext.Korisnici.AnyAsync(x => x.Id == command.KorisnikId, cancellationToken))
+        {
+            throw new EntitetNijePronadjenException("Korisnik nije pronađen.");
+        }
         var pozivnica = await dbContext.PozivniceBenda
             .Include(x => x.Bend).ThenInclude(x => x.Zanr)
             .Include(x => x.PozvaoKorisnik)
             .Include(x => x.Status)
             .SingleOrDefaultAsync(x => x.Id == command.PozivnicaId, cancellationToken)
             ?? throw new EntitetNijePronadjenException("Pozivnica nije pronađena.");
-        if (pozivnica.PozvaniKorisnikId != command.KorisnikId && pozivnica.Email != korisnik.Email)
+        if (pozivnica.PozvaniKorisnikId != command.KorisnikId)
         {
             throw new NedozvoljenaOperacijaException("Pozivnica nije namijenjena ovom korisniku.");
         }
@@ -311,21 +325,21 @@ public sealed class MobileExperienceService(
 
         var statusKod = command.Prihvati ? "PRIHVACENA" : "ODBIJENA";
         var status = await dbContext.StatusiPozivnica.SingleAsync(x => x.Kod == statusKod, cancellationToken);
-        pozivnica.PozvaniKorisnikId = korisnik.Id;
+        pozivnica.PozvaniKorisnikId = command.KorisnikId;
         pozivnica.Status = status;
         pozivnica.StatusPozivniceId = status.Id;
         pozivnica.OdgovorenaUtc = sada;
         if (command.Prihvati)
         {
             var clanstvo = await dbContext.ClanoviBenda.SingleOrDefaultAsync(
-                x => x.BendId == pozivnica.BendId && x.KorisnikId == korisnik.Id,
+                x => x.BendId == pozivnica.BendId && x.KorisnikId == command.KorisnikId,
                 cancellationToken);
             if (clanstvo is null)
             {
                 dbContext.ClanoviBenda.Add(new ClanBenda
                 {
                     BendId = pozivnica.BendId,
-                    KorisnikId = korisnik.Id,
+                    KorisnikId = command.KorisnikId,
                     InstrumentId = command.InstrumentId,
                     DatumPridruzivanjaUtc = sada,
                     UlogaUBendu = "Član",
@@ -485,6 +499,7 @@ public sealed class MobileExperienceService(
 
         return new ProfilPregledDto(
             korisnik.Id,
+            korisnik.Username,
             korisnik.Ime,
             korisnik.Prezime,
             korisnik.Email,
@@ -695,6 +710,7 @@ public sealed class MobileExperienceService(
                 .ThenBy(x => x.Korisnik.Ime)
                 .Select(x => new ClanBendaDto(
                     x.KorisnikId,
+                    x.Korisnik.Username,
                     $"{x.Korisnik.Ime} {x.Korisnik.Prezime}",
                     x.Instrument == null ? null : x.Instrument.Naziv,
                     x.UlogaUBendu,
@@ -702,7 +718,7 @@ public sealed class MobileExperienceService(
                 .ToArray(),
             bend.Pozivnice
                 .OrderByDescending(x => x.KreiranaUtc)
-                .Select(x => new PozivnicaBendaDto(x.Id, x.Email, x.Kod, x.Status.Naziv, x.IsticeUtc))
+                .Select(x => new PozivnicaBendaDto(x.Id, x.Username, x.Kod, x.Status.Naziv, x.IsticeUtc))
                 .ToArray());
 
     private static PrimljenaPozivnicaBendaDto UPrimljenuPozivnicuDto(PozivnicaBenda pozivnica) => new(

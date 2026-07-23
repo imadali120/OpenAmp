@@ -1,3 +1,4 @@
+using OpenAmp.Application.Auth;
 using OpenAmp.Infrastructure.Auth;
 
 namespace OpenAmp.Infrastructure.Tests.Domain;
@@ -28,4 +29,35 @@ public sealed class AuthSecurityTests
         Assert.Equal(prvi.Hash, service.Hash(prvi.Vrijednost));
         Assert.Equal(sada.AddDays(30), prvi.IsticeUtc);
     }
+
+    [Theory]
+    [InlineData("bezvelikog1!")]
+    [InlineData("BEZMALOG1!")]
+    [InlineData("BezBroja!!")]
+    [InlineData("BezPosebnog1A")]
+    [InlineData("Kratko1!")]
+    public void PasswordPolicyOdbijaSlabeLozinke(string password)
+    {
+        var error = Assert.Throws<ArgumentException>(() => CredentialPolicy.ValidatePassword(password));
+
+        Assert.Contains("veliko i malo slovo", error.Message);
+    }
+
+    [Fact]
+    public void PasswordPolicyPrihvataKompleksnuLozinku() =>
+        CredentialPolicy.ValidatePassword("OpenAmp!2026");
+
+    [Theory]
+    [InlineData("Imad.Ali", "imad.ali")]
+    [InlineData("  open_amp  ", "open_amp")]
+    public void UsernameSeNormalizuje(string input, string expected) =>
+        Assert.Equal(expected, CredentialPolicy.NormalizeUsername(input));
+
+    [Theory]
+    [InlineData("ab")]
+    [InlineData("_pocetak")]
+    [InlineData("ime sa razmakom")]
+    [InlineData("korisnik@openamp")]
+    public void UsernamePolicyOdbijaNeispravneVrijednosti(string username) =>
+        Assert.Throws<ArgumentException>(() => CredentialPolicy.NormalizeUsername(username));
 }

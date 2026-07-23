@@ -16,15 +16,22 @@ public sealed class RegisterCommandHandler(
         CancellationToken cancellationToken = default)
     {
         var email = NormalizujEmail(command.Email);
+        var username = CredentialPolicy.NormalizeUsername(command.Username);
+        CredentialPolicy.ValidatePassword(command.Password);
         if (await korisnikRepository.EmailPostojiAsync(email, cancellationToken))
         {
             throw new EmailJeZauzetException();
+        }
+        if (await korisnikRepository.UsernamePostojiAsync(username, cancellationToken: cancellationToken))
+        {
+            throw new UsernameJeZauzetException();
         }
 
         var sadaUtc = timeProvider.GetUtcNow().UtcDateTime;
         var uloga = await korisnikRepository.DohvatiUloguMuzicaraAsync(cancellationToken);
         var korisnik = new Korisnik
         {
+            Username = username,
             Ime = command.Ime.Trim(),
             Prezime = command.Prezime.Trim(),
             Email = email,
@@ -67,6 +74,7 @@ public sealed class RegisterCommandHandler(
             refresh.IsticeUtc,
             new KorisnikDto(
                 korisnik.Id,
+                korisnik.Username,
                 korisnik.Ime,
                 korisnik.Prezime,
                 korisnik.Email,
@@ -88,8 +96,8 @@ public sealed class LoginCommandHandler(
         LoginCommand command,
         CancellationToken cancellationToken = default)
     {
-        var korisnik = await korisnikRepository.DohvatiPoEmailuAsync(
-            RegisterCommandHandler.NormalizujEmail(command.Email),
+        var korisnik = await korisnikRepository.DohvatiPoEmailuIliUsernameuAsync(
+            command.Email.Trim().ToLowerInvariant(),
             cancellationToken);
 
         if (korisnik is null || !korisnik.Aktivan || !passwordHasher.Verify(command.Password, korisnik.PasswordHash))
@@ -158,6 +166,7 @@ public sealed class DohvatiKorisnikaQueryHandler(IKorisnikRepository korisnikRep
 
     internal static KorisnikDto Mapiraj(Korisnik korisnik) => new(
         korisnik.Id,
+        korisnik.Username,
         korisnik.Ime,
         korisnik.Prezime,
         korisnik.Email,
@@ -177,12 +186,22 @@ public sealed class AzurirajProfilCommandHandler(
     {
         var korisnik = await korisnikRepository.DohvatiPoIdAsync(command.KorisnikId, cancellationToken)
             ?? throw new KorisnikNijePronadjenException();
+        var username = CredentialPolicy.NormalizeUsername(command.Username);
+        if (await korisnikRepository.UsernamePostojiAsync(
+                username,
+                korisnik.Id,
+                cancellationToken))
+        {
+            throw new UsernameJeZauzetException();
+        }
+        korisnik.Username = username;
         korisnik.Ime = command.Ime.Trim();
         korisnik.Prezime = command.Prezime.Trim();
         korisnik.Telefon = command.Telefon?.Trim();
-        korisnik.FotografijaUrl = string.IsNullOrWhiteSpace(command.FotografijaUrl)
-            ? null
-            : command.FotografijaUrl.Trim();
+        if (!string.IsNullOrWhiteSpace(command.FotografijaUrl))
+        {
+            korisnik.FotografijaUrl = command.FotografijaUrl.Trim();
+        }
 
         var instrumentIds = command.InstrumentIds.Distinct().ToArray();
         var instrumenti = await korisnikRepository.DohvatiInstrumenteAsync(instrumentIds, cancellationToken);
@@ -223,11 +242,7 @@ public sealed class PromijeniLozinkuCommandHandler(
             throw new NeispravniPodaciZaPrijavuException();
         }
 
-        if (command.NovaLozinka.Length is < 10 or > 128)
-        {
-            throw new ArgumentException("Nova lozinka mora imati između 10 i 128 znakova.");
-        }
-
+        CredentialPolicy.ValidatePassword(command.NovaLozinka);
         korisnik.PasswordHash = passwordHasher.Hash(command.NovaLozinka);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return true;

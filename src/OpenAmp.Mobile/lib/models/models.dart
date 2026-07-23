@@ -1,3 +1,5 @@
+import 'package:openamp_mobile/core/config/app_config.dart';
+
 class LookupItem {
   const LookupItem({required this.id, required this.code, required this.name});
   final int id;
@@ -64,7 +66,7 @@ class HallSummary {
     capacity: json['kapacitet'] as int,
     hourlyPrice: (json['cijenaPoSatu'] as num).toDouble(),
     status: json['status'] as String,
-    imageUrl: json['slikaUrl'] as String?,
+    imageUrl: AppConfig.resolveMediaUrl(json['slikaUrl'] as String?),
     rating: (json['prosjecnaOcjena'] as num).toDouble(),
     reviewCount: json['brojRecenzija'] as int,
     equipment: List<String>.from(json['oprema'] as List),
@@ -199,7 +201,9 @@ class HallDetails {
     longitude: (json['geografskaDuzina'] as num?)?.toDouble(),
     rating: (json['prosjecnaOcjena'] as num).toDouble(),
     reviewCount: json['brojRecenzija'] as int,
-    gallery: List<String>.from(json['galerija'] as List),
+    gallery: (json['galerija'] as List)
+        .map((value) => AppConfig.resolveMediaUrl(value as String)!)
+        .toList(),
     equipment: _list(json['oprema'], EquipmentItem.fromJson),
     storeItems: _list(json['artikli'], StoreItem.fromJson),
     reviews: _list(json['recenzije'], HallReview.fromJson),
@@ -209,12 +213,14 @@ class HallDetails {
 class BandMember {
   const BandMember({
     required this.userId,
+    required this.username,
     required this.fullName,
     required this.instrument,
     required this.role,
     required this.isFounder,
   });
   final int userId;
+  final String username;
   final String fullName;
   final String? instrument;
   final String? role;
@@ -222,6 +228,7 @@ class BandMember {
 
   factory BandMember.fromJson(Map<String, dynamic> json) => BandMember(
     userId: json['korisnikId'] as int,
+    username: json['username'] as String,
     fullName: json['imePrezime'] as String,
     instrument: json['instrument'] as String?,
     role: json['uloga'] as String?,
@@ -232,20 +239,20 @@ class BandMember {
 class BandInvitation {
   const BandInvitation({
     required this.id,
-    required this.email,
+    required this.username,
     required this.code,
     required this.status,
     required this.expiresAt,
   });
   final int id;
-  final String email;
+  final String username;
   final String code;
   final String status;
   final DateTime expiresAt;
 
   factory BandInvitation.fromJson(Map<String, dynamic> json) => BandInvitation(
     id: json['id'] as int,
-    email: json['email'] as String,
+    username: json['username'] as String,
     code: json['kod'] as String,
     status: json['status'] as String,
     expiresAt: DateTime.parse(json['isticeUtc'] as String).toUtc(),
@@ -318,7 +325,7 @@ class Band {
     name: json['naziv'] as String,
     genre: json['zanr'] as String,
     description: json['opis'] as String?,
-    imageUrl: json['fotografijaUrl'] as String?,
+    imageUrl: AppConfig.resolveMediaUrl(json['fotografijaUrl'] as String?),
     isFounder: json['jeOsnivac'] as bool,
     reservationCount: json['brojRezervacija'] as int,
     members: _list(json['clanovi'], BandMember.fromJson),
@@ -373,7 +380,7 @@ class Reservation {
     status: json['status'] as String,
     statusCode: json['statusKod'] as String,
     rowVersion: json['rowVersion'] as String,
-    imageUrl: json['slikaUrl'] as String?,
+    imageUrl: AppConfig.resolveMediaUrl(json['slikaUrl'] as String?),
     canCancel: json['mozeOtkazati'] as bool,
     canReview: json['mozeRecenzirati'] as bool,
   );
@@ -524,6 +531,7 @@ class UserSettings {
 class ProfileOverview {
   const ProfileOverview({
     required this.id,
+    required this.username,
     required this.firstName,
     required this.lastName,
     required this.email,
@@ -538,6 +546,7 @@ class ProfileOverview {
     required this.topGenre,
   });
   final int id;
+  final String username;
   final String firstName;
   final String lastName;
   final String email;
@@ -556,11 +565,12 @@ class ProfileOverview {
   factory ProfileOverview.fromJson(Map<String, dynamic> json) =>
       ProfileOverview(
         id: json['id'] as int,
+        username: json['username'] as String,
         firstName: json['ime'] as String,
         lastName: json['prezime'] as String,
         email: json['email'] as String,
         phone: json['telefon'] as String?,
-        imageUrl: json['fotografijaUrl'] as String?,
+        imageUrl: AppConfig.resolveMediaUrl(json['fotografijaUrl'] as String?),
         instruments: List<String>.from(json['instrumenti'] as List),
         bandCount: json['brojBendova'] as int,
         reservationCount: json['brojRezervacija'] as int,

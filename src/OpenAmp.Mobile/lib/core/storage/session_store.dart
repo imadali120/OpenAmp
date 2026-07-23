@@ -7,6 +7,7 @@ class AuthSession {
     required this.accessToken,
     required this.refreshToken,
     required this.userId,
+    required this.username,
     required this.firstName,
     required this.lastName,
     required this.email,
@@ -15,6 +16,7 @@ class AuthSession {
   final String accessToken;
   final String refreshToken;
   final int userId;
+  final String username;
   final String firstName;
   final String lastName;
   final String email;
@@ -25,6 +27,7 @@ class AuthSession {
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String,
       userId: user['id'] as int,
+      username: user['username'] as String,
       firstName: user['ime'] as String,
       lastName: user['prezime'] as String,
       email: user['email'] as String,
@@ -35,6 +38,7 @@ class AuthSession {
     'accessToken': accessToken,
     'refreshToken': refreshToken,
     'userId': userId,
+    'username': username,
     'firstName': firstName,
     'lastName': lastName,
     'email': email,
@@ -44,6 +48,7 @@ class AuthSession {
     accessToken: json['accessToken'] as String,
     refreshToken: json['refreshToken'] as String,
     userId: json['userId'] as int,
+    username: json['username'] as String? ?? '',
     firstName: json['firstName'] as String,
     lastName: json['lastName'] as String,
     email: json['email'] as String,

@@ -174,7 +174,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                       color: selected ? AppColors.signal : AppColors.paper,
                       borderRadius: BorderRadius.circular(AppRadii.small),
                       border: Border.all(
-                        color: selected ? AppColors.ink : AppColors.line,
+                        color: selected ? AppColors.primary : AppColors.line,
                         width: selected ? 1.4 : 1,
                       ),
                     ),
@@ -195,7 +195,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                         Text(
                           value.day.toString(),
                           style: TextStyle(
-                            color: AppColors.ink,
+                            color: selected ? AppColors.ink : AppColors.text,
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                           ),
@@ -270,7 +270,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                       duration: const Duration(milliseconds: 140),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.ink : AppColors.paper,
+                        color: selected ? AppColors.primary : AppColors.paper,
                         borderRadius: BorderRadius.circular(AppRadii.small),
                         border: Border.all(
                           color: selected ? AppColors.signal : AppColors.line,
@@ -280,7 +280,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                       child: Text(
                         DateFormat('HH:mm').format(slot.start.toLocal()),
                         style: TextStyle(
-                          color: selected ? Colors.white : AppColors.ink,
+                          color: selected ? AppColors.ink : AppColors.text,
                           fontWeight: FontWeight.w900,
                           letterSpacing: .2,
                         ),

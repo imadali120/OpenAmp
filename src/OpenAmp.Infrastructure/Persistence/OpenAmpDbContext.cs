@@ -33,6 +33,7 @@ public sealed class OpenAmpDbContext(DbContextOptions<OpenAmpDbContext> options)
     public DbSet<StatusRezervacije> StatusiRezervacija => Set<StatusRezervacije>();
     public DbSet<Recenzija> Recenzije => Set<Recenzija>();
     public DbSet<StripeWebhookDogadjaj> StripeWebhookDogadjaji => Set<StripeWebhookDogadjaj>();
+    public DbSet<MedijskaDatoteka> MedijskeDatoteke => Set<MedijskaDatoteka>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

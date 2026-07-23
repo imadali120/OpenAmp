@@ -110,6 +110,7 @@ class AppController extends Notifier<AppState> {
   }
 
   Future<void> register({
+    required String username,
     required String firstName,
     required String lastName,
     required String email,
@@ -118,6 +119,7 @@ class AppController extends Notifier<AppState> {
   }) async {
     await _guard(() async {
       final session = await _repository.register(
+        username: username,
         firstName: firstName,
         lastName: lastName,
         email: email,
@@ -194,9 +196,9 @@ class AppController extends Notifier<AppState> {
     });
   }
 
-  Future<void> inviteMember(int bandId, String email) async {
+  Future<void> inviteMember(int bandId, String username) async {
     await _guard(() async {
-      await _repository.inviteMember(bandId, email);
+      await _repository.inviteMember(bandId, username);
       state = state.copyWith(bands: await _repository.getMyBands());
     });
   }
@@ -274,6 +276,7 @@ class AppController extends Notifier<AppState> {
   }
 
   Future<void> updateProfile({
+    required String username,
     required String firstName,
     required String lastName,
     String? phone,
@@ -282,6 +285,7 @@ class AppController extends Notifier<AppState> {
   }) async {
     await _guard(() async {
       await _repository.updateProfile(
+        username: username,
         firstName: firstName,
         lastName: lastName,
         phone: phone,
@@ -289,6 +293,20 @@ class AppController extends Notifier<AppState> {
         instrumentIds: instrumentIds,
       );
       state = state.copyWith(profile: await _repository.getProfile());
+    });
+  }
+
+  Future<void> uploadProfilePhoto(String path) async {
+    await _guard(() async {
+      await _repository.uploadProfilePhoto(path);
+      state = state.copyWith(profile: await _repository.getProfile());
+    });
+  }
+
+  Future<void> uploadBandPhoto(int bandId, String path) async {
+    await _guard(() async {
+      await _repository.uploadBandPhoto(bandId, path);
+      state = state.copyWith(bands: await _repository.getMyBands());
     });
   }
 

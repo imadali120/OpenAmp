@@ -3,12 +3,15 @@ namespace OpenAmp.Domain.Entities;
 public sealed class Korisnik
 {
     public int Id { get; set; }
+    public string Username { get; set; } = string.Empty;
     public string Ime { get; set; } = string.Empty;
     public string Prezime { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string? Telefon { get; set; }
     public string? FotografijaUrl { get; set; }
+    public int? ProfilnaSlikaId { get; set; }
+    public MedijskaDatoteka? ProfilnaSlika { get; set; }
     public string? StripeCustomerId { get; set; }
     public bool Aktivan { get; set; } = true;
     public DateTime KreiranUtc { get; set; }
@@ -77,6 +80,8 @@ public sealed class Bend
     public string Naziv { get; set; } = string.Empty;
     public string? Opis { get; set; }
     public string? FotografijaUrl { get; set; }
+    public int? FotografijaId { get; set; }
+    public MedijskaDatoteka? Fotografija { get; set; }
     public DateTime KreiranUtc { get; set; }
     public int OsnivacId { get; set; }
     public Korisnik Osnivac { get; set; } = null!;
@@ -107,9 +112,9 @@ public sealed class PozivnicaBenda
     public Bend Bend { get; set; } = null!;
     public int PozvaoKorisnikId { get; set; }
     public Korisnik PozvaoKorisnik { get; set; } = null!;
-    public int? PozvaniKorisnikId { get; set; }
-    public Korisnik? PozvaniKorisnik { get; set; }
-    public string Email { get; set; } = string.Empty;
+    public int PozvaniKorisnikId { get; set; }
+    public Korisnik PozvaniKorisnik { get; set; } = null!;
+    public string Username { get; set; } = string.Empty;
     public string Kod { get; set; } = string.Empty;
     public int StatusPozivniceId { get; set; }
     public StatusPozivnice Status { get; set; } = null!;

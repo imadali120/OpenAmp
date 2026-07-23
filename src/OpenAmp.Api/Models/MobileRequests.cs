@@ -8,7 +8,7 @@ public sealed record CreateBandRequest(
     [param: StringLength(1000)] string? Opis);
 
 public sealed record InviteBandMemberRequest(
-    [param: Required, EmailAddress, StringLength(320)] string Email);
+    [param: Required, StringLength(30, MinimumLength = 3)] string Username);
 
 public sealed record UpdateBandRequest(
     [param: Required, StringLength(150, MinimumLength = 2)] string Naziv,

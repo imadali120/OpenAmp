@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const ink = Color(0xFF17131F);
-  static const inkSoft = Color(0xFF2B2632);
-  static const canvas = Color(0xFFF3F0E9);
-  static const paper = Color(0xFFFFFCF6);
-  static const paperMuted = Color(0xFFE8E3DA);
-  static const line = Color(0xFFCEC7BC);
-  static const primary = Color(0xFF6847F5);
-  static const primarySoft = Color(0xFFE8E1FF);
+  static const ink = Color(0xFF101114);
+  static const inkSoft = Color(0xFFD0D1D5);
+  static const canvas = Color(0xFF0C0D10);
+  static const paper = Color(0xFF17191E);
+  static const paperMuted = Color(0xFF24272E);
+  static const line = Color(0xFF363A43);
+  static const primary = Color(0xFFFF633D);
+  static const primarySoft = Color(0xFF3A211B);
   static const signal = Color(0xFFFF633D);
-  static const signalSoft = Color(0xFFFFE3DA);
-  static const text = ink;
-  static const textMuted = Color(0xFF6D6672);
-  static const success = Color(0xFF14855E);
-  static const successSoft = Color(0xFFDDF3E8);
-  static const danger = Color(0xFFD63D55);
-  static const dangerSoft = Color(0xFFFFE0E5);
-  static const warning = Color(0xFFE49318);
+  static const signalSoft = Color(0xFF3A211B);
+  static const text = Color(0xFFF4F1EA);
+  static const textMuted = Color(0xFFA3A7B0);
+  static const success = Color(0xFF42C995);
+  static const successSoft = Color(0xFF17352B);
+  static const danger = Color(0xFFFF667D);
+  static const dangerSoft = Color(0xFF3B1D24);
+  static const warning = Color(0xFFF1AE3D);
 
   // Kept for existing screens while the refreshed names above communicate intent.
   static const primaryDark = ink;
@@ -32,60 +32,60 @@ abstract final class AppRadii {
 }
 
 abstract final class OpenAmpTheme {
-  static ThemeData get light {
-    const scheme = ColorScheme.light(
+  static ThemeData get dark {
+    const scheme = ColorScheme.dark(
       primary: AppColors.primary,
-      onPrimary: Colors.white,
+      onPrimary: AppColors.ink,
       primaryContainer: AppColors.primarySoft,
-      onPrimaryContainer: AppColors.ink,
+      onPrimaryContainer: AppColors.text,
       secondary: AppColors.signal,
       onSecondary: AppColors.ink,
       secondaryContainer: AppColors.signalSoft,
-      onSecondaryContainer: AppColors.ink,
+      onSecondaryContainer: AppColors.text,
       error: AppColors.danger,
       surface: AppColors.paper,
-      onSurface: AppColors.ink,
+      onSurface: AppColors.text,
       outline: AppColors.line,
       outlineVariant: AppColors.paperMuted,
     );
 
     const textTheme = TextTheme(
       displaySmall: TextStyle(
-        color: AppColors.ink,
+        color: AppColors.text,
         fontSize: 38,
         height: 0.98,
         fontWeight: FontWeight.w900,
         letterSpacing: -1.8,
       ),
       headlineMedium: TextStyle(
-        color: AppColors.ink,
+        color: AppColors.text,
         fontSize: 29,
         height: 1.04,
         fontWeight: FontWeight.w900,
         letterSpacing: -1.1,
       ),
       titleLarge: TextStyle(
-        color: AppColors.ink,
+        color: AppColors.text,
         fontSize: 20,
         height: 1.1,
         fontWeight: FontWeight.w900,
         letterSpacing: -0.45,
       ),
       titleMedium: TextStyle(
-        color: AppColors.ink,
+        color: AppColors.text,
         fontSize: 16,
         height: 1.2,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.15,
       ),
-      bodyLarge: TextStyle(color: AppColors.ink, fontSize: 16, height: 1.45),
+      bodyLarge: TextStyle(color: AppColors.text, fontSize: 16, height: 1.45),
       bodyMedium: TextStyle(
         color: AppColors.textMuted,
         fontSize: 14,
         height: 1.42,
       ),
       labelLarge: TextStyle(
-        color: AppColors.ink,
+        color: AppColors.text,
         fontSize: 15,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.1,
@@ -109,14 +109,14 @@ abstract final class OpenAmpTheme {
       splashFactory: InkSparkle.splashFactory,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.canvas,
-        foregroundColor: AppColors.ink,
+        foregroundColor: AppColors.text,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 18,
         titleTextStyle: TextStyle(
-          color: AppColors.ink,
+          color: AppColors.text,
           fontSize: 19,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.35,
@@ -135,8 +135,8 @@ abstract final class OpenAmpTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(54),
-          backgroundColor: AppColors.ink,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.ink,
           disabledBackgroundColor: AppColors.paperMuted,
           disabledForegroundColor: AppColors.textMuted,
           elevation: 0,
@@ -153,8 +153,8 @@ abstract final class OpenAmpTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          foregroundColor: AppColors.ink,
-          side: const BorderSide(color: AppColors.ink, width: 1.3),
+          foregroundColor: AppColors.text,
+          side: const BorderSide(color: AppColors.line, width: 1.3),
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.medium),
@@ -187,7 +187,7 @@ abstract final class OpenAmpTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.paper,
-        selectedColor: AppColors.ink,
+        selectedColor: AppColors.primary,
         disabledColor: AppColors.paperMuted,
         side: const BorderSide(color: AppColors.line),
         shape: RoundedRectangleBorder(
@@ -201,7 +201,7 @@ abstract final class OpenAmpTheme {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.ink,
+        backgroundColor: AppColors.paperMuted,
         contentTextStyle: const TextStyle(color: Colors.white),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -209,7 +209,7 @@ abstract final class OpenAmpTheme {
         ),
       ),
       tabBarTheme: const TabBarThemeData(
-        labelColor: AppColors.ink,
+        labelColor: AppColors.text,
         unselectedLabelColor: AppColors.textMuted,
         indicatorColor: AppColors.signal,
         indicatorSize: TabBarIndicatorSize.label,
@@ -221,7 +221,7 @@ abstract final class OpenAmpTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.large),
-          side: const BorderSide(color: AppColors.ink),
+          side: const BorderSide(color: AppColors.line),
         ),
       ),
     );

@@ -67,6 +67,7 @@ public sealed record SalaDetaljiDto(
 
 public sealed record ClanBendaDto(
     int KorisnikId,
+    string Username,
     string ImePrezime,
     string? Instrument,
     string? Uloga,
@@ -74,7 +75,7 @@ public sealed record ClanBendaDto(
 
 public sealed record PozivnicaBendaDto(
     int Id,
-    string Email,
+    string Username,
     string Kod,
     string Status,
     DateTime IsticeUtc);
@@ -126,6 +127,7 @@ public sealed record KorisnickePostavkeDto(
 
 public sealed record ProfilPregledDto(
     int Id,
+    string Username,
     string Ime,
     string Prezime,
     string Email,
@@ -166,7 +168,7 @@ public sealed record KreirajBendCommand(
 public sealed record PosaljiPozivnicuBendaCommand(
     int KorisnikId,
     int BendId,
-    string Email) : ICommand<PozivnicaBendaDto>;
+    string Username) : ICommand<PozivnicaBendaDto>;
 
 public sealed record OdgovoriNaPozivnicuBendaCommand(
     int KorisnikId,

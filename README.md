@@ -13,12 +13,15 @@ Repozitorij sadrži:
 
 - .NET 8 slojevita arhitektura: `Domain`, `Application`, `Infrastructure` i `Api`
 - Entity Framework Core 8 i SQL Server 2022
-- JWT registracija, prijava i rotacija refresh tokena
+- JWT registracija, prijava emailom ili usernameom i rotacija refresh tokena
+- jedinstveni usernameovi, pozivnice za bend po usernameu i jedinstvena password politika
 - provjera termina, kalkulacija cijene, izmjena i otkazivanje rezervacije
 - Stripe Payment Intents, potpisani webhook i automatski refund
 - Flutter aplikacija sa Riverpod state managementom i Dio API klijentom
 - pretraga i detalji sala, satni slotovi, oprema, artikli i Stripe PaymentSheet
 - upravljanje bendovima, članovima i pozivnicama, historija proba i profil
+- upload profilnih, bend i studio/sala fotografija u SQL Server bazu
+- tamni mobilni interfejs sa OpenAmp narandžastom akcent bojom
 - izmjena/otkazivanje termina, refund pregled, recenzije i ponovno rezervisanje
 - trajno sačuvane sale, navigacija do studija i korisničke postavke
 - Stripe Customer Session za sačuvane kartice i oporavak napuštenog checkouta

@@ -22,6 +22,7 @@ internal sealed class StudioConfiguration : IEntityTypeConfiguration<Studio>
         builder.Property(x => x.Grad).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Telefon).HasMaxLength(30);
         builder.Property(x => x.Email).HasMaxLength(320);
+        builder.Property(x => x.FotografijaUrl).HasMaxLength(2048);
         builder.Property(x => x.VremenskaZona).HasMaxLength(100).IsRequired();
         builder.Property(x => x.RadnoVrijemeOd).HasColumnType("time(0)");
         builder.Property(x => x.RadnoVrijemeDo).HasColumnType("time(0)");
@@ -30,6 +31,10 @@ internal sealed class StudioConfiguration : IEntityTypeConfiguration<Studio>
             .WithMany(x => x.Studiji)
             .HasForeignKey(x => x.VlasnikId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Fotografija)
+            .WithMany()
+            .HasForeignKey(x => x.FotografijaId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasData(OpenAmpSeed.Studiji);
     }
 }
@@ -76,6 +81,10 @@ internal sealed class SalaSlikaConfiguration : IEntityTypeConfiguration<SalaSlik
             .WithMany(x => x.Galerija)
             .HasForeignKey(x => x.SalaId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.MedijskaDatoteka)
+            .WithMany()
+            .HasForeignKey(x => x.MedijskaDatotekaId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasData(OpenAmpSeed.SlikeSala);
     }
 }

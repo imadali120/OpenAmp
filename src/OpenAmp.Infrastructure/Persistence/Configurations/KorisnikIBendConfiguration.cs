@@ -10,6 +10,7 @@ internal sealed class KorisnikConfiguration : IEntityTypeConfiguration<Korisnik>
     {
         builder.ToTable("Korisnici");
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.Username).HasMaxLength(30).IsRequired();
         builder.Property(x => x.Ime).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Prezime).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(320).IsRequired();
@@ -19,11 +20,16 @@ internal sealed class KorisnikConfiguration : IEntityTypeConfiguration<Korisnik>
         builder.Property(x => x.StripeCustomerId).HasMaxLength(255);
         builder.Property(x => x.KreiranUtc).HasPrecision(0);
         builder.HasIndex(x => x.Email).IsUnique();
+        builder.HasIndex(x => x.Username).IsUnique();
         builder.HasIndex(x => x.StripeCustomerId).IsUnique().HasFilter("[StripeCustomerId] IS NOT NULL");
         builder.HasOne(x => x.Uloga)
             .WithMany(x => x.Korisnici)
             .HasForeignKey(x => x.UlogaId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.ProfilnaSlika)
+            .WithMany()
+            .HasForeignKey(x => x.ProfilnaSlikaId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 
@@ -119,6 +125,10 @@ internal sealed class BendConfiguration : IEntityTypeConfiguration<Bend>
             .WithMany(x => x.Bendovi)
             .HasForeignKey(x => x.ZanrId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Fotografija)
+            .WithMany()
+            .HasForeignKey(x => x.FotografijaId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 
@@ -152,13 +162,13 @@ internal sealed class PozivnicaBendaConfiguration : IEntityTypeConfiguration<Poz
         builder.ToTable("PozivniceBenda", table =>
             table.HasCheckConstraint("CK_PozivniceBenda_Datum", "[IsticeUtc] > [KreiranaUtc]"));
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Email).HasMaxLength(320).IsRequired();
+        builder.Property(x => x.Username).HasMaxLength(30).IsRequired();
         builder.Property(x => x.Kod).HasMaxLength(100).IsRequired();
         builder.Property(x => x.KreiranaUtc).HasPrecision(0);
         builder.Property(x => x.IsticeUtc).HasPrecision(0);
         builder.Property(x => x.OdgovorenaUtc).HasPrecision(0);
         builder.HasIndex(x => x.Kod).IsUnique();
-        builder.HasIndex(x => new { x.BendId, x.Email, x.StatusPozivniceId });
+        builder.HasIndex(x => new { x.BendId, x.Username, x.StatusPozivniceId });
         builder.HasOne(x => x.Bend)
             .WithMany(x => x.Pozivnice)
             .HasForeignKey(x => x.BendId)

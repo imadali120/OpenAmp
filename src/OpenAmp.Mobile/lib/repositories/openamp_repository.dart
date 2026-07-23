@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:openamp_mobile/core/network/api_client.dart';
 import 'package:openamp_mobile/core/storage/session_store.dart';
@@ -7,11 +8,11 @@ class OpenAmpRepository {
   OpenAmpRepository(this._apiClient);
   final ApiClient _apiClient;
 
-  Future<AuthSession> login(String email, String password) async {
+  Future<AuthSession> login(String identifier, String password) async {
     try {
       final response = await _apiClient.dio.post<Map<String, dynamic>>(
         '/api/auth/login',
-        data: {'email': email.trim(), 'password': password},
+        data: {'email': identifier.trim(), 'password': password},
       );
       final session = AuthSession.fromAuthResponse(response.data!);
       await _apiClient.sessionStore.save(session);
@@ -22,6 +23,7 @@ class OpenAmpRepository {
   }
 
   Future<AuthSession> register({
+    required String username,
     required String firstName,
     required String lastName,
     required String email,
@@ -32,6 +34,7 @@ class OpenAmpRepository {
       final response = await _apiClient.dio.post<Map<String, dynamic>>(
         '/api/auth/register',
         data: {
+          'username': username.trim(),
           'ime': firstName.trim(),
           'prezime': lastName.trim(),
           'email': email.trim(),
@@ -153,11 +156,11 @@ class OpenAmpRepository {
     }
   }
 
-  Future<BandInvitation> inviteMember(int bandId, String email) async {
+  Future<BandInvitation> inviteMember(int bandId, String username) async {
     try {
       final response = await _apiClient.dio.post<Map<String, dynamic>>(
         '/api/bands/$bandId/invitations',
-        data: {'email': email.trim()},
+        data: {'username': username.trim()},
       );
       return BandInvitation.fromJson(response.data!);
     } catch (error) {
@@ -339,6 +342,7 @@ class OpenAmpRepository {
   }
 
   Future<void> updateProfile({
+    required String username,
     required String firstName,
     required String lastName,
     String? phone,
@@ -349,12 +353,45 @@ class OpenAmpRepository {
       await _apiClient.dio.put<Map<String, dynamic>>(
         '/api/users/me',
         data: {
+          'username': username,
           'ime': firstName,
           'prezime': lastName,
           'telefon': phone,
           'fotografijaUrl': imageUrl,
           'instrumentIds': instrumentIds,
         },
+      );
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> uploadProfilePhoto(String path) async {
+    try {
+      await _apiClient.dio.post<Map<String, dynamic>>(
+        '/api/images/profile',
+        data: FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            path,
+            contentType: _imageContentType(path),
+          ),
+        }),
+      );
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
+  Future<void> uploadBandPhoto(int bandId, String path) async {
+    try {
+      await _apiClient.dio.post<Map<String, dynamic>>(
+        '/api/images/bands/$bandId',
+        data: FormData.fromMap({
+          'file': await MultipartFile.fromFile(
+            path,
+            contentType: _imageContentType(path),
+          ),
+        }),
       );
     } catch (error) {
       _apiClient.throwApiError(error);
@@ -488,6 +525,15 @@ class OpenAmpRepository {
     } catch (error) {
       _apiClient.throwApiError(error);
     }
+  }
+
+  static DioMediaType _imageContentType(String path) {
+    final extension = path.toLowerCase().split('.').last;
+    return switch (extension) {
+      'png' => DioMediaType('image', 'png'),
+      'webp' => DioMediaType('image', 'webp'),
+      _ => DioMediaType('image', 'jpeg'),
+    };
   }
 }
 

@@ -10,11 +10,23 @@ public sealed class KorisnikRepository(OpenAmpDbContext dbContext) : IKorisnikRe
     public Task<bool> EmailPostojiAsync(string email, CancellationToken cancellationToken = default) =>
         dbContext.Korisnici.AnyAsync(x => x.Email == email, cancellationToken);
 
-    public Task<Korisnik?> DohvatiPoEmailuAsync(string email, CancellationToken cancellationToken = default) =>
+    public Task<bool> UsernamePostojiAsync(
+        string username,
+        int? osimKorisnikaId = null,
+        CancellationToken cancellationToken = default) =>
+        dbContext.Korisnici.AnyAsync(
+            x => x.Username == username && (!osimKorisnikaId.HasValue || x.Id != osimKorisnikaId.Value),
+            cancellationToken);
+
+    public Task<Korisnik?> DohvatiPoEmailuIliUsernameuAsync(
+        string identifikator,
+        CancellationToken cancellationToken = default) =>
         dbContext.Korisnici
             .Include(x => x.Uloga)
             .Include(x => x.RefreshTokeni.Where(t => t.OpozvanUtc == null))
-            .SingleOrDefaultAsync(x => x.Email == email, cancellationToken);
+            .SingleOrDefaultAsync(
+                x => x.Email == identifikator || x.Username == identifikator,
+                cancellationToken);
 
     public Task<Korisnik?> DohvatiPoIdAsync(int id, CancellationToken cancellationToken = default) =>
         dbContext.Korisnici
