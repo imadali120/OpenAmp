@@ -28,6 +28,7 @@ public sealed class Korisnik
     public PostavkeKorisnika? Postavke { get; set; }
     public ICollection<Studio> Studiji { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokeni { get; set; } = [];
+    public ICollection<ServisOpreme> PrijavljeniServisi { get; set; } = [];
 }
 
 public sealed class PostavkeKorisnika

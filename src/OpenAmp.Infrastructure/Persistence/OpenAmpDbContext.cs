@@ -23,6 +23,7 @@ public sealed class OpenAmpDbContext(DbContextOptions<OpenAmpDbContext> options)
     public DbSet<StatusSale> StatusiSala => Set<StatusSale>();
     public DbSet<SalaSlika> SlikeSala => Set<SalaSlika>();
     public DbSet<Oprema> Oprema => Set<Oprema>();
+    public DbSet<ServisOpreme> ServisiOpreme => Set<ServisOpreme>();
     public DbSet<KategorijaOpreme> KategorijeOpreme => Set<KategorijaOpreme>();
     public DbSet<StatusOpreme> StatusiOpreme => Set<StatusOpreme>();
     public DbSet<Artikal> Artikli => Set<Artikal>();

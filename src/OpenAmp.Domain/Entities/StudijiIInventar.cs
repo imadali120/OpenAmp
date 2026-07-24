@@ -68,6 +68,7 @@ public sealed class Oprema
     public decimal CijenaNajmaPoSatu { get; set; }
     public DateOnly? DatumNabavke { get; set; }
     public DateOnly? DatumZadnjegServisa { get; set; }
+    public int Stanje { get; set; } = 5;
     public string? Napomena { get; set; }
     public int KategorijaOpremeId { get; set; }
     public KategorijaOpreme Kategorija { get; set; } = null!;
@@ -76,6 +77,21 @@ public sealed class Oprema
     public int? SalaId { get; set; }
     public Sala? Sala { get; set; }
     public ICollection<StavkaRezervacije> StavkeRezervacija { get; set; } = [];
+    public ICollection<ServisOpreme> ServisnaHistorija { get; set; } = [];
+}
+
+public sealed class ServisOpreme
+{
+    public int Id { get; set; }
+    public int OpremaId { get; set; }
+    public Oprema Oprema { get; set; } = null!;
+    public DateTime PrijavljenUtc { get; set; }
+    public DateTime? ZavrsenUtc { get; set; }
+    public string OpisKvara { get; set; } = string.Empty;
+    public string? IzvrseniRadovi { get; set; }
+    public decimal Trosak { get; set; }
+    public int PrijavioKorisnikId { get; set; }
+    public Korisnik PrijavioKorisnik { get; set; } = null!;
 }
 
 public sealed class Artikal

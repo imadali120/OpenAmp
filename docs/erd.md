@@ -1,4 +1,4 @@
-# OpenAmp ERD — Faze 1–3
+# OpenAmp ERD — Faze 1–4
 
 ```mermaid
 erDiagram
@@ -28,6 +28,8 @@ erDiagram
     SALA o|--o{ OPREMA : lokacija
     KATEGORIJA_OPREME ||--o{ OPREMA : kategorija
     STATUS_OPREME ||--o{ OPREMA : status
+    OPREMA ||--o{ SERVIS_OPREME : historija
+    KORISNIK ||--o{ SERVIS_OPREME : prijavljuje
     STUDIO ||--o{ ARTIKAL : prodaje
     KATEGORIJA_ARTIKLA ||--o{ ARTIKAL : kategorija
     STATUS_ARTIKLA ||--o{ ARTIKAL : status
@@ -105,6 +107,17 @@ erDiagram
         int KategorijaOpremeId FK
         int StatusOpremeId FK
         int SalaId FK
+        int Stanje
+    }
+    SERVIS_OPREME {
+        int Id PK
+        int OpremaId FK
+        int PrijavioKorisnikId FK
+        datetime PrijavljenUtc
+        datetime ZavrsenUtc
+        string OpisKvara
+        string IzvrseniRadovi
+        decimal Trosak
     }
     ARTIKAL {
         int Id PK
@@ -162,4 +175,5 @@ erDiagram
 - Hash refresh tokena je jedinstven i stvarni token se nikada ne čuva u bazi.
 - Username je normalizovan na mala slova i jedinstven; pozivnice za bend vežu se za postojećeg korisnika.
 - JPEG, PNG i WebP slike do 5 MB čuvaju se u `MedijskeDatoteke`.
+- Stanje opreme je ograničeno na raspon 1–5, a svaki kvar i završeni servis ostaju u servisnoj historiji.
 - ID Stripe webhook događaja je primarni ključ za idempotentnu obradu.

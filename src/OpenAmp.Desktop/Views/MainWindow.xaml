@@ -1,0 +1,449 @@
+<Window x:Class="OpenAmp.Desktop.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="OpenAmp Studio" Width="1480" Height="920"
+        MinWidth="1120" MinHeight="720" WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Background="#111115" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="92" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="90" />
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="22,0">
+                    <Border Width="37" Height="37" CornerRadius="9" Background="{StaticResource AccentBrush}" Margin="0,0,10,0">
+                        <TextBlock Text="O" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock FontSize="22" FontWeight="Bold" VerticalAlignment="Center">
+                        <Run Text="Open" /><Run Text="Amp" Foreground="{StaticResource AccentBrush}" />
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="0" Content="Dashboard" />
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="1" Content="Sale" />
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="2" Content="Oprema" />
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="3" Content="Rezervacije" />
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="4" Content="Bendovi" />
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="5" Content="Artikli" />
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateCommand}" CommandParameter="6" Content="Korisnici" />
+                </StackPanel>
+
+                <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="18">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="42" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="36" Height="36" CornerRadius="18" Background="#29292F">
+                            <TextBlock Text="{Binding Initials}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding CurrentUser}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding CurrentRole}" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="78" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="32" />
+            </Grid.RowDefinitions>
+            <Border Background="#111115" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="28,0">
+                    <TextBlock Text="{Binding PageTitle}" Style="{StaticResource PageTitle}" VerticalAlignment="Center" />
+                    <Button Content="Osvježi" Command="{Binding RefreshCommand}" HorizontalAlignment="Right"
+                            VerticalAlignment="Center" Padding="14,7" />
+                </Grid>
+            </Border>
+
+            <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedPage}" Margin="26,22">
+                <TabItem>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,18">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource Card}" Margin="0,0,10,0" BorderThickness="2,1,1,1" BorderBrush="{StaticResource AccentBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="DANAŠNJE PROBE" Style="{StaticResource MutedText}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Dashboard.DanasnjeProbe}" FontSize="34" FontWeight="Bold" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1" Style="{StaticResource Card}" Margin="4,0,7,0">
+                                    <StackPanel>
+                                        <TextBlock Text="AKTIVNE SALE" Style="{StaticResource MutedText}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Dashboard.AktivneSale}" FontSize="34" FontWeight="Bold" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource Card}" Margin="7,0,4,0">
+                                    <StackPanel>
+                                        <TextBlock Text="OPREMA NA NAJMU" Style="{StaticResource MutedText}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Dashboard.OpremaNaNajmu}" FontSize="34" FontWeight="Bold" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="3" Style="{StaticResource Card}" Margin="10,0,0,0" BorderBrush="{StaticResource DangerBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="NISKE ZALIHE" Style="{StaticResource MutedText}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Dashboard.NiskeZalihe}" FontSize="34" FontWeight="Bold" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.05*" />
+                                    <ColumnDefinition Width="1.4*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource Card}" Margin="0,0,9,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Raspored za danas" Style="{StaticResource SectionTitle}" />
+                                        <ItemsControl ItemsSource="{Binding Dashboard.RasporedDanas}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="0,11">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="70" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Vrijeme}" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="{Binding Bend}" FontWeight="SemiBold" />
+                                                                <TextBlock Text="{Binding Sala}" Style="{StaticResource MutedText}" FontSize="12" />
+                                                            </StackPanel>
+                                                            <Border Grid.Column="2" Background="{Binding Zanr, Converter={StaticResource GenreBrushConverter}}"
+                                                                    CornerRadius="12" Padding="10,4">
+                                                                <TextBlock Text="{Binding Zanr}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="9,0,0,0">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+                                        <StackPanel>
+                                            <TextBlock Text="Zauzetost sala · sedmica" Style="{StaticResource SectionTitle}" />
+                                            <ItemsControl ItemsSource="{Binding Dashboard.ZauzetostSedmica}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Width="104" Margin="0,0,7,7" Padding="9" CornerRadius="7"
+                                                                Background="#202026" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Sala}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Text="{Binding Datum, StringFormat=dd.MM.}" Style="{StaticResource MutedText}" FontSize="10" />
+                                                                <TextBlock Text="{Binding Postotak, StringFormat={}{0}%}" FontSize="18" FontWeight="Bold" Margin="0,5,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="Upozorenja o zalihama" Style="{StaticResource SectionTitle}" />
+                                            <ItemsControl ItemsSource="{Binding Dashboard.UpozorenjaZaliha}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,7">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="5" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Background="{StaticResource DangerBrush}" CornerRadius="3" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding Naziv}" Margin="12,0" FontWeight="SemiBold" />
+                                                            <TextBlock Grid.Column="2" Text="{Binding StanjeZalihe}" Style="{StaticResource MutedText}" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem>
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding HallSearch, UpdateSourceTrigger=PropertyChanged}" Height="40" Margin="0,0,10,0"
+                                     ToolTip="Pretraga po sali ili studiju" />
+                            <Button Grid.Column="1" Content="Filtriraj" Command="{Binding ApplyFiltersCommand}" Margin="0,0,10,0" />
+                            <Button Grid.Column="2" Content="+ Nova sala" Command="{Binding AddHallCommand}" Style="{StaticResource AccentButton}" />
+                        </Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Halls}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Card}" Width="355" Margin="0,0,16,16" Padding="0">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="150" />
+                                                    <RowDefinition Height="*" />
+                                                </Grid.RowDefinitions>
+                                                <Border Background="#25252B" CornerRadius="11,11,0,0">
+                                                    <Grid>
+                                                        <Image Source="{Binding SlikaUrl}" Stretch="UniformToFill" />
+                                                        <TextBlock Text="OPENAMP / SALA" Style="{StaticResource MutedText}" FontSize="11"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+                                                <StackPanel Grid.Row="1" Margin="17">
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Naziv}" FontSize="18" FontWeight="Bold" />
+                                                        <Border HorizontalAlignment="Right" CornerRadius="12" Padding="9,4"
+                                                                Background="{Binding StatusKod, Converter={StaticResource StatusBrushConverter}}">
+                                                            <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                                                        </Border>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Studio}" Style="{StaticResource MutedText}" Margin="0,4,0,10" />
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Kapacitet}" /><Run Text=" osoba   ·   " />
+                                                        <Run Text="{Binding CijenaPoSatu}" /><Run Text=" KM/h" />
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding OpremaTekst}" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" Margin="0,9,0,14" />
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Content="Uredi" Command="{Binding DataContext.EditHallCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}" Padding="11,6" Margin="0,0,7,0" />
+                                                        <Button Content="Dodaj sliku" Command="{Binding DataContext.UploadHallImageCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}" Padding="11,6" Margin="0,0,7,0" />
+                                                        <Button Content="Deaktiviraj" Command="{Binding DataContext.DeactivateHallCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}" Padding="11,6" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem>
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding EquipmentSearch, UpdateSourceTrigger=PropertyChanged}" Height="40" Margin="0,0,10,0" />
+                            <Button Grid.Column="1" Content="Filtriraj" Command="{Binding ApplyFiltersCommand}" Margin="0,0,10,0" />
+                            <Button Grid.Column="2" Content="+ Nova oprema" Command="{Binding AddEquipmentCommand}" Style="{StaticResource AccentButton}" />
+                        </Grid>
+                        <DataGrid ItemsSource="{Binding Equipment}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="INV. BROJ" Binding="{Binding InventarskiBroj}" Width="120" />
+                                <DataGridTextColumn Header="NAZIV" Binding="{Binding Naziv}" Width="*" />
+                                <DataGridTextColumn Header="KATEGORIJA" Binding="{Binding Kategorija}" Width="140" />
+                                <DataGridTextColumn Header="SALA" Binding="{Binding Sala}" Width="130" />
+                                <DataGridTextColumn Header="CIJENA/H" Binding="{Binding CijenaNajmaPoSatu, StringFormat={}{0:0.00} KM}" Width="105" />
+                                <DataGridTextColumn Header="STANJE" Binding="{Binding StanjeTekst}" Width="105" />
+                                <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="120" />
+                                <DataGridTemplateColumn Header="" Width="270">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Uredi" Padding="10,5" Margin="0,0,6,0"
+                                                        Command="{Binding DataContext.EditEquipmentCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                <Button Content="Kvar" Padding="10,5" Margin="0,0,6,0"
+                                                        Command="{Binding DataContext.ReportServiceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                <Button Content="Završi servis" Padding="10,5"
+                                                        Command="{Binding DataContext.CompleteServiceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem>
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="‹" Command="{Binding PreviousWeekCommand}" Padding="13,7" />
+                                <TextBlock Text="{Binding WeekLabel}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="15,0" />
+                                <Button Content="›" Command="{Binding NextWeekCommand}" Padding="13,7" />
+                            </StackPanel>
+                            <Button Grid.Column="3" Content="+ Rezervacija" Command="{Binding AddReservationCommand}" Style="{StaticResource AccentButton}" />
+                        </Grid>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding WeekDays}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Card}" Width="174" MinHeight="560" Margin="0,0,10,0" Padding="10">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Dan}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                                <TextBlock Text="{Binding DatumTekst}" FontSize="19" FontWeight="SemiBold" Margin="0,2,0,14" />
+                                                <ItemsControl ItemsSource="{Binding Rezervacije}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Button Command="{Binding DataContext.EditReservationCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                    CommandParameter="{Binding}" Padding="0" Margin="0,0,0,8" HorizontalContentAlignment="Stretch">
+                                                                <Border Background="{Binding Zanr, Converter={StaticResource GenreBrushConverter}}" CornerRadius="8" Padding="10">
+                                                                    <StackPanel>
+                                                                        <TextBlock Text="{Binding Vrijeme}" FontWeight="Bold" Foreground="White" />
+                                                                        <TextBlock Text="{Binding Bend}" Foreground="White" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+                                                                        <TextBlock Text="{Binding Sala}" Foreground="#EAE7E2" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                                    </StackPanel>
+                                                                </Border>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem>
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding BandSearch, UpdateSourceTrigger=PropertyChanged}" Height="40" Margin="0,0,10,0" />
+                            <Button Grid.Column="1" Content="Filtriraj" Command="{Binding ApplyFiltersCommand}" />
+                        </Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Bands}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Card}" Margin="0,0,0,12" BorderThickness="3,1,1,1"
+                                                BorderBrush="{Binding Zanr, Converter={StaticResource GenreBrushConverter}}">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <StackPanel>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Naziv}" FontSize="20" FontWeight="Bold" Margin="0,0,10,0" />
+                                                            <Border Background="{Binding Zanr, Converter={StaticResource GenreBrushConverter}}" CornerRadius="11" Padding="9,3">
+                                                                <TextBlock Text="{Binding Zanr}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Statistika}" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                                                    </StackPanel>
+                                                    <Button Content="Uredi" HorizontalAlignment="Right" VerticalAlignment="Top" Padding="12,6"
+                                                            Command="{Binding DataContext.EditBandCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                                </Grid>
+                                                <ItemsControl ItemsSource="{Binding Clanovi}" Margin="0,18,0,0">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="#222228" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                                                    CornerRadius="8" Padding="11" Margin="0,0,8,8" MinWidth="175">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding ImePrezime}" FontWeight="SemiBold" />
+                                                                    <TextBlock Text="{Binding Username, StringFormat=@{0}}" Foreground="{StaticResource AccentBrush}" FontSize="11" />
+                                                                    <TextBlock Text="{Binding Instrument}" Style="{StaticResource MutedText}" FontSize="11" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Top" Content="+ Novi artikal" Command="{Binding AddArticleCommand}"
+                                Style="{StaticResource AccentButton}" HorizontalAlignment="Right" Margin="0,0,0,18" />
+                        <DataGrid ItemsSource="{Binding Articles}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="INV. BROJ" Binding="{Binding InventarskiBroj}" Width="130" />
+                                <DataGridTextColumn Header="NAZIV" Binding="{Binding Naziv}" Width="*" />
+                                <DataGridTextColumn Header="KATEGORIJA" Binding="{Binding Kategorija}" Width="130" />
+                                <DataGridTextColumn Header="STUDIO" Binding="{Binding Studio}" Width="150" />
+                                <DataGridTextColumn Header="ZALIHA" Binding="{Binding StanjeZalihe}" Width="130" />
+                                <DataGridTextColumn Header="CIJENA" Binding="{Binding Cijena, StringFormat={}{0:0.00} KM}" Width="100" />
+                                <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="110" />
+                                <DataGridTemplateColumn Header="" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Uredi" Padding="10,5" Command="{Binding DataContext.EditArticleCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem>
+                    <DataGrid ItemsSource="{Binding Users}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="KORISNIK" Binding="{Binding ImePrezime}" Width="*" />
+                            <DataGridTextColumn Header="USERNAME" Binding="{Binding Username}" Width="150" />
+                            <DataGridTextColumn Header="EMAIL" Binding="{Binding Email}" Width="220" />
+                            <DataGridTextColumn Header="ULOGA" Binding="{Binding Uloga}" Width="150" />
+                            <DataGridCheckBoxColumn Header="AKTIVAN" Binding="{Binding Aktivan}" Width="85" />
+                            <DataGridTextColumn Header="KREIRAN" Binding="{Binding KreiranUtc, StringFormat=dd.MM.yyyy}" Width="110" />
+                            <DataGridTemplateColumn Header="" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Uredi" Padding="10,5" Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+            </TabControl>
+
+            <Border Grid.Row="2" Background="#111115" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                <TextBlock Text="{Binding Status}" Style="{StaticResource MutedText}" FontSize="11" VerticalAlignment="Center" Margin="12,0" />
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

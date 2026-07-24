@@ -126,6 +126,21 @@ public sealed class ModelConfigurationTests
         Assert.NotNull(user?.FindProperty(nameof(Korisnik.ProfilnaSlikaId)));
     }
 
+    [Fact]
+    public void OpremaImaStanjeIServisnuHistoriju()
+    {
+        using var context = KreirajSqlServerContext();
+        var oprema = context.Model.FindEntityType(typeof(Oprema));
+        var servis = context.Model.FindEntityType(typeof(ServisOpreme));
+
+        Assert.False(oprema?.FindProperty(nameof(Oprema.Stanje))?.IsNullable);
+        Assert.Equal("ServisiOpreme", servis?.GetTableName());
+        Assert.Contains(
+            servis?.GetForeignKeys() ?? [],
+            x => x.PrincipalEntityType.ClrType == typeof(Oprema)
+                && x.DeleteBehavior == DeleteBehavior.Cascade);
+    }
+
     private static OpenAmpDbContext KreirajSqlServerContext()
     {
         var options = new DbContextOptionsBuilder<OpenAmpDbContext>()

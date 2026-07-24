@@ -94,13 +94,17 @@ internal sealed class OpremaConfiguration : IEntityTypeConfiguration<Oprema>
     public void Configure(EntityTypeBuilder<Oprema> builder)
     {
         builder.ToTable("Oprema", table =>
-            table.HasCheckConstraint("CK_Oprema_CijenaNajma", "[CijenaNajmaPoSatu] >= 0"));
+        {
+            table.HasCheckConstraint("CK_Oprema_CijenaNajma", "[CijenaNajmaPoSatu] >= 0");
+            table.HasCheckConstraint("CK_Oprema_Stanje", "[Stanje] BETWEEN 1 AND 5");
+        });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.InventarskiBroj).HasMaxLength(50).IsRequired();
         builder.Property(x => x.Naziv).HasMaxLength(150).IsRequired();
         builder.Property(x => x.Opis).HasMaxLength(2000);
         builder.Property(x => x.SerijskiBroj).HasMaxLength(100);
         builder.Property(x => x.CijenaNajmaPoSatu).HasPrecision(10, 2);
+        builder.Property(x => x.Stanje).HasDefaultValue(5);
         builder.Property(x => x.Napomena).HasMaxLength(1000);
         builder.HasIndex(x => x.InventarskiBroj).IsUnique();
         builder.HasIndex(x => new { x.KategorijaOpremeId, x.StatusOpremeId, x.SalaId });
@@ -117,6 +121,28 @@ internal sealed class OpremaConfiguration : IEntityTypeConfiguration<Oprema>
             .HasForeignKey(x => x.SalaId)
             .OnDelete(DeleteBehavior.SetNull);
         builder.HasData(OpenAmpSeed.Oprema);
+    }
+}
+
+internal sealed class ServisOpremeConfiguration : IEntityTypeConfiguration<ServisOpreme>
+{
+    public void Configure(EntityTypeBuilder<ServisOpreme> builder)
+    {
+        builder.ToTable("ServisiOpreme", table =>
+            table.HasCheckConstraint("CK_ServisiOpreme_Trosak", "[Trosak] >= 0"));
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.OpisKvara).HasMaxLength(2000).IsRequired();
+        builder.Property(x => x.IzvrseniRadovi).HasMaxLength(2000);
+        builder.Property(x => x.Trosak).HasPrecision(10, 2);
+        builder.HasIndex(x => new { x.OpremaId, x.PrijavljenUtc });
+        builder.HasOne(x => x.Oprema)
+            .WithMany(x => x.ServisnaHistorija)
+            .HasForeignKey(x => x.OpremaId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.PrijavioKorisnik)
+            .WithMany(x => x.PrijavljeniServisi)
+            .HasForeignKey(x => x.PrijavioKorisnikId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

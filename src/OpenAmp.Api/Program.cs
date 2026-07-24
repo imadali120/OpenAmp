@@ -13,6 +13,7 @@ using OpenAmp.Application.Reservations;
 using OpenAmp.Infrastructure.DependencyInjection;
 using OpenAmp.Infrastructure.Payments;
 using OpenAmp.Infrastructure.Persistence;
+using OpenAmp.Infrastructure.Persistence.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("OpenAmp")
@@ -112,6 +113,11 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
 {
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider.GetRequiredService<OpenAmpDbContext>().Database.MigrateAsync();
+    if (app.Environment.IsDevelopment()
+        && app.Configuration.GetValue<bool>("Database:SeedDevelopmentUsers"))
+    {
+        await scope.ServiceProvider.GetRequiredService<DevelopmentDataSeeder>().SeedAsync();
+    }
 }
 
 app.UseExceptionHandler();

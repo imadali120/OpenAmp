@@ -8,6 +8,7 @@ Repozitorij sadrži:
 - FAZU 2: REST API, JWT autentikaciju, logiku rezervacija i Stripe plaćanje
 - FAZU 3: Flutter mobilnu aplikaciju za Android i iOS
 - FAZU 3.1: kompletiranje mobilnih rezervacija, profila, bendova, recenzija i Stripe lifecyclea
+- FAZU 4: WPF desktop aplikaciju za administratore i zaposlenike studija
 
 ## Implementirano
 
@@ -22,6 +23,8 @@ Repozitorij sadrži:
 - upravljanje bendovima, članovima i pozivnicama, historija proba i profil
 - upload profilnih, bend i studio/sala fotografija u SQL Server bazu
 - tamni mobilni interfejs sa OpenAmp narandžastom akcent bojom
+- WPF desktop dashboard, upravljanje salama, opremom, servisima, artiklima, rezervacijama, bendovima i korisnicima
+- tamni desktop interfejs sa sedmičnim kalendarom i OpenAmp narandžastom akcent bojom
 - izmjena/otkazivanje termina, refund pregled, recenzije i ponovno rezervisanje
 - trajno sačuvane sale, navigacija do studija i korisničke postavke
 - Stripe Customer Session za sačuvane kartice i oporavak napuštenog checkouta
@@ -37,6 +40,7 @@ src/
   OpenAmp.Infrastructure/  EF Core, autentikacija, rezervacije i Stripe
   OpenAmp.Api/             REST kontroleri, JWT, Swagger i middleware
   OpenAmp.Mobile/          Flutter aplikacija za muzičare
+  OpenAmp.Desktop/         WPF aplikacija za studio
 tests/
   OpenAmp.Infrastructure.Tests/
 docs/
@@ -68,6 +72,16 @@ flutter run --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264 --dart-define=STR
 ```
 
 `10.0.2.2` je adresa host računara iz Android emulatora. Za fizički uređaj koristi lokalnu IP adresu računara. Detaljne upute su u [dokumentaciji FAZE 3](docs/phase3-mobile.md).
+
+## Pokretanje desktop aplikacije
+
+Dok su baza i API pokrenuti:
+
+```powershell
+dotnet run --project src/OpenAmp.Desktop
+```
+
+Lokalni razvojni računi su `admin / OpenAmp1!` i `zaposlenik / OpenAmp1!`. Detaljne upute su u [dokumentaciji FAZE 4](docs/phase4-desktop.md).
 
 ## Build i testovi
 
