@@ -8,6 +8,7 @@ using OpenAmp.Api.Errors;
 using OpenAmp.Application.Auth;
 using OpenAmp.Application.Common;
 using OpenAmp.Application.Mobile;
+using OpenAmp.Application.Messaging;
 using OpenAmp.Application.Payments;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Infrastructure.DependencyInjection;
@@ -21,6 +22,7 @@ var connectionString = builder.Configuration.GetConnectionString("OpenAmp")
 
 builder.Services.AddOpenAmpInfrastructure(connectionString);
 builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection(StripeOptions.SectionName));
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 builder.Services.AddOptions<JwtOptions>()
     .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
     .Validate(x => x.SigningKey.Length >= 32, "JWT signing key mora imati najmanje 32 znaka.")

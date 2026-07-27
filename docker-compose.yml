@@ -17,5 +17,68 @@ services:
       retries: 10
       start_period: 20s
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: openamp-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-openamp}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-openamp}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - openamp-rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: src/OpenAmp.Api/Dockerfile
+    container_name: openamp-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__OpenAmp: Server=sqlserver,1433;Database=220336;User Id=sa;Password=${MSSQL_SA_PASSWORD:-OpenAmp_Dev123!};TrustServerCertificate=True;Encrypt=False
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-OpenAmp_Docker_Development_Signing_Key_2026!}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER:-openamp}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-openamp}
+      Database__ApplyMigrationsOnStartup: "true"
+      Database__SeedDevelopmentUsers: "true"
+    ports:
+      - "5264:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 35s
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/OpenAmp.Worker/Dockerfile
+    container_name: openamp-worker
+    environment:
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__UserName: ${RABBITMQ_USER:-openamp}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-openamp}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
 volumes:
   openamp-sql-data:
+  openamp-rabbitmq-data:

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
+import 'package:openamp_mobile/desktop/desktop_shell.dart';
 import 'package:openamp_mobile/screens/auth/auth_screen.dart';
 import 'package:openamp_mobile/screens/main_shell.dart';
 import 'package:openamp_mobile/state/app_state.dart';
@@ -21,8 +23,19 @@ class OpenAmpApp extends ConsumerWidget {
       home: !state.initialized
           ? const Scaffold(body: Center(child: OpenAmpLoader()))
           : state.authenticated
-          ? const MainShell()
+          ? _authenticatedHome(state)
           : const AuthScreen(),
     );
+  }
+
+  Widget _authenticatedHome(AppState state) {
+    final isDesktop =
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux;
+    if (isDesktop && state.session!.canUseDesktop) {
+      return const DesktopShell();
+    }
+    return const MainShell();
   }
 }

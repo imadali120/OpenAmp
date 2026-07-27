@@ -2,6 +2,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using OpenAmp.Application.Payments;
+using OpenAmp.Application.Messaging;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Domain.Entities;
 using OpenAmp.Domain.Rules;
@@ -12,7 +13,8 @@ namespace OpenAmp.Infrastructure.Reservations;
 public sealed class RezervacijaService(
     OpenAmpDbContext dbContext,
     IStripeGateway stripeGateway,
-    TimeProvider timeProvider) : IRezervacijaService
+    TimeProvider timeProvider,
+    IMessagePublisher messagePublisher) : IRezervacijaService
 {
     private static readonly string[] AktivniStatusi = ["NA_CEKANJU", "PLACENA"];
 
@@ -92,6 +94,15 @@ public sealed class RezervacijaService(
             dbContext.Rezervacije.Add(rezervacija);
             await dbContext.SaveChangesAsync(cancellationToken);
             await transakcija.CommitAsync(cancellationToken);
+            await messagePublisher.PublishAsync(
+                new NotificationMessage(
+                    Guid.NewGuid(),
+                    "reservation.created",
+                    bend.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    "Nova rezervacija",
+                    $"{bend.Naziv}: {sala.Naziv}, {rezervacija.TerminOdUtc:O}",
+                    sadaUtc),
+                cancellationToken);
             return Mapiraj(rezervacija);
         }
         catch (Exception exception) when (JeSqlServerDeadlock(exception))

@@ -11,6 +11,7 @@ class AuthSession {
     required this.firstName,
     required this.lastName,
     required this.email,
+    required this.role,
   });
 
   final String accessToken;
@@ -20,6 +21,12 @@ class AuthSession {
   final String firstName;
   final String lastName;
   final String email;
+  final String role;
+
+  bool get canUseDesktop =>
+      role.toUpperCase() == 'ADMIN' ||
+      role.toUpperCase() == 'ZAPOSLENIK' ||
+      role.toUpperCase() == 'ADMINISTRATOR';
 
   factory AuthSession.fromAuthResponse(Map<String, dynamic> json) {
     final user = json['korisnik'] as Map<String, dynamic>;
@@ -31,6 +38,7 @@ class AuthSession {
       firstName: user['ime'] as String,
       lastName: user['prezime'] as String,
       email: user['email'] as String,
+      role: user['uloga'] as String? ?? 'MUZICAR',
     );
   }
 
@@ -42,6 +50,7 @@ class AuthSession {
     'firstName': firstName,
     'lastName': lastName,
     'email': email,
+    'role': role,
   };
 
   factory AuthSession.fromJson(Map<String, dynamic> json) => AuthSession(
@@ -52,6 +61,7 @@ class AuthSession {
     firstName: json['firstName'] as String,
     lastName: json['lastName'] as String,
     email: json['email'] as String,
+    role: json['role'] as String? ?? 'MUZICAR',
   );
 }
 

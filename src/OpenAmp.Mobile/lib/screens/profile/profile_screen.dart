@@ -282,6 +282,7 @@ class ProfileScreen extends ConsumerWidget {
     final firstName = TextEditingController(text: profile.firstName);
     final lastName = TextEditingController(text: profile.lastName);
     final phone = TextEditingController(text: profile.phone);
+    final formKey = GlobalKey<FormState>();
     String? selectedPhotoPath;
     final selected =
         state.lookups?.instruments
@@ -295,110 +296,133 @@ class ProfileScreen extends ConsumerWidget {
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('Lični podaci'),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                StatefulBuilder(
-                  builder: (context, setPhotoState) => Column(
-                    children: [
-                      Container(
-                        width: 86,
-                        height: 86,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          color: AppColors.signal,
-                          borderRadius: BorderRadius.circular(22),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  StatefulBuilder(
+                    builder: (context, setPhotoState) => Column(
+                      children: [
+                        Container(
+                          width: 86,
+                          height: 86,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            color: AppColors.signal,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: selectedPhotoPath != null
+                              ? Image.file(
+                                  File(selectedPhotoPath!),
+                                  fit: BoxFit.cover,
+                                )
+                              : profile.imageUrl != null
+                              ? Image.network(
+                                  profile.imageUrl!,
+                                  fit: BoxFit.cover,
+                                )
+                              : Center(
+                                  child: _ProfileInitials(
+                                    name: profile.fullName,
+                                  ),
+                                ),
                         ),
-                        child: selectedPhotoPath != null
-                            ? Image.file(
-                                File(selectedPhotoPath!),
-                                fit: BoxFit.cover,
-                              )
-                            : profile.imageUrl != null
-                            ? Image.network(
-                                profile.imageUrl!,
-                                fit: BoxFit.cover,
-                              )
-                            : Center(
-                                child: _ProfileInitials(name: profile.fullName),
-                              ),
-                      ),
-                      TextButton.icon(
-                        onPressed: () async {
-                          final photo = await ImagePicker().pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 1600,
-                            maxHeight: 1600,
-                            imageQuality: 88,
-                          );
-                          if (photo != null) {
-                            setPhotoState(() => selectedPhotoPath = photo.path);
-                          }
-                        },
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Odaberi fotografiju'),
-                      ),
-                    ],
+                        TextButton.icon(
+                          onPressed: () async {
+                            final photo = await ImagePicker().pickImage(
+                              source: ImageSource.gallery,
+                              maxWidth: 1600,
+                              maxHeight: 1600,
+                              imageQuality: 88,
+                            );
+                            if (photo != null) {
+                              setPhotoState(
+                                () => selectedPhotoPath = photo.path,
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library_outlined),
+                          label: const Text('Odaberi fotografiju'),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: username,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    prefixText: '@',
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: username,
+                    autocorrect: false,
+                    validator: (value) => _validUsername(value ?? '')
+                        ? null
+                        : '3–30 znakova: mala slova, brojevi, tačka ili _.',
+                    decoration: const InputDecoration(
+                      labelText: 'Username',
+                      prefixText: '@',
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: firstName,
-                  decoration: const InputDecoration(labelText: 'Ime'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: lastName,
-                  decoration: const InputDecoration(labelText: 'Prezime'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: phone,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Telefon'),
-                ),
-                const SizedBox(height: 10),
-                const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Instrumenti',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: firstName,
+                    validator: (value) => (value?.trim().length ?? 0) >= 2
+                        ? null
+                        : 'Ime mora imati najmanje 2 znaka.',
+                    decoration: const InputDecoration(labelText: 'Ime'),
                   ),
-                ),
-                const SizedBox(height: 7),
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: (state.lookups?.instruments ?? []).map((item) {
-                    final isSelected = selected.contains(item.id);
-                    return FilterChip(
-                      label: Text(item.name),
-                      selected: isSelected,
-                      selectedColor: AppColors.primary,
-                      checkmarkColor: AppColors.ink,
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppColors.ink : AppColors.text,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      onSelected: (value) => setDialogState(
-                        () => value
-                            ? selected.add(item.id)
-                            : selected.remove(item.id),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: lastName,
+                    validator: (value) => (value?.trim().length ?? 0) >= 2
+                        ? null
+                        : 'Prezime mora imati najmanje 2 znaka.',
+                    decoration: const InputDecoration(labelText: 'Prezime'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: phone,
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      final text = value?.trim() ?? '';
+                      if (text.isEmpty) return null;
+                      return RegExp(r'^\+?[0-9][0-9 ()-]{6,18}$').hasMatch(text)
+                          ? null
+                          : 'Unesite ispravan broj telefona.';
+                    },
+                    decoration: const InputDecoration(labelText: 'Telefon'),
+                  ),
+                  const SizedBox(height: 10),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Instrumenti',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: (state.lookups?.instruments ?? []).map((item) {
+                      final isSelected = selected.contains(item.id);
+                      return FilterChip(
+                        label: Text(item.name),
+                        selected: isSelected,
+                        selectedColor: AppColors.primary,
+                        checkmarkColor: AppColors.ink,
+                        labelStyle: TextStyle(
+                          color: isSelected ? AppColors.ink : AppColors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        onSelected: (value) => setDialogState(
+                          () => value
+                              ? selected.add(item.id)
+                              : selected.remove(item.id),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -407,19 +431,18 @@ class ProfileScreen extends ConsumerWidget {
               child: const Text('Odustani'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(context, true);
+                }
+              },
               child: const Text('Sačuvaj'),
             ),
           ],
         ),
       ),
     );
-    if (accepted != true ||
-        !_validUsername(username.text) ||
-        firstName.text.trim().length < 2 ||
-        lastName.text.trim().length < 2) {
-      return;
-    }
+    if (accepted != true) return;
     try {
       await ref
           .read(appControllerProvider.notifier)
@@ -521,36 +544,60 @@ class ProfileScreen extends ConsumerWidget {
     final current = TextEditingController();
     final next = TextEditingController();
     final confirm = TextEditingController();
+    final passwordFormKey = GlobalKey<FormState>();
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Promijeni lozinku'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: current,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Trenutna lozinka'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: next,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Nova lozinka',
-                helperText: '10+ znakova, A–Z, a–z, broj i poseban znak',
+        content: Form(
+          key: passwordFormKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: current,
+                obscureText: true,
+                validator: (value) => (value?.isEmpty ?? true)
+                    ? 'Unesite trenutnu lozinku.'
+                    : null,
+                decoration: const InputDecoration(
+                  labelText: 'Trenutna lozinka',
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: confirm,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Ponovi novu lozinku',
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: next,
+                obscureText: true,
+                validator: (value) {
+                  final password = value ?? '';
+                  final valid =
+                      password.length >= 10 &&
+                      password.length <= 128 &&
+                      password.contains(RegExp('[A-Z]')) &&
+                      password.contains(RegExp('[a-z]')) &&
+                      password.contains(RegExp('[0-9]')) &&
+                      password.contains(RegExp(r'[^A-Za-z0-9]'));
+                  return valid
+                      ? null
+                      : 'Potrebno je veliko i malo slovo, broj i poseban znak.';
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Nova lozinka',
+                  helperText: '10+ znakova, A–Z, a–z, broj i poseban znak',
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: confirm,
+                obscureText: true,
+                validator: (value) =>
+                    value == next.text ? null : 'Lozinke se ne podudaraju.',
+                decoration: const InputDecoration(
+                  labelText: 'Ponovi novu lozinku',
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -558,7 +605,11 @@ class ProfileScreen extends ConsumerWidget {
             child: const Text('Odustani'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () {
+              if (passwordFormKey.currentState!.validate()) {
+                Navigator.pop(context, true);
+              }
+            },
             child: const Text('Promijeni'),
           ),
         ],

@@ -171,6 +171,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       controller: _phone,
                                       keyboardType: TextInputType.phone,
                                       textInputAction: TextInputAction.next,
+                                      validator: _validatePhone,
                                       decoration: const InputDecoration(
                                         labelText: 'Telefon (opcionalno)',
                                         prefixIcon: Icon(Icons.phone_outlined),
@@ -265,6 +266,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   String? _requiredPassword(String? value) =>
       value == null || value.isEmpty ? 'Unesite lozinku.' : null;
+
+  String? _validatePhone(String? value) {
+    final phone = value?.trim() ?? '';
+    if (phone.isEmpty) return null;
+    return RegExp(r'^\+?[0-9][0-9 ()-]{6,18}$').hasMatch(phone)
+        ? null
+        : 'Unesite ispravan broj telefona.';
+  }
 
   String? _validateUsername(String? value) {
     final username = value?.trim().toLowerCase() ?? '';

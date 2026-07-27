@@ -1,6 +1,13 @@
 namespace OpenAmp.Domain.Entities;
 
-public sealed class Uloga
+public interface ISifarnik
+{
+    int Id { get; set; }
+    string Kod { get; set; }
+    string Naziv { get; set; }
+}
+
+public sealed class Uloga : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -8,7 +15,7 @@ public sealed class Uloga
     public ICollection<Korisnik> Korisnici { get; set; } = [];
 }
 
-public sealed class Zanr
+public sealed class Zanr : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -16,7 +23,7 @@ public sealed class Zanr
     public ICollection<Bend> Bendovi { get; set; } = [];
 }
 
-public sealed class Instrument
+public sealed class Instrument : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -25,7 +32,7 @@ public sealed class Instrument
     public ICollection<ClanBenda> ClanoviBendova { get; set; } = [];
 }
 
-public sealed class StatusSale
+public sealed class StatusSale : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -33,7 +40,7 @@ public sealed class StatusSale
     public ICollection<Sala> Sale { get; set; } = [];
 }
 
-public sealed class KategorijaOpreme
+public sealed class KategorijaOpreme : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -41,7 +48,7 @@ public sealed class KategorijaOpreme
     public ICollection<Oprema> Oprema { get; set; } = [];
 }
 
-public sealed class StatusOpreme
+public sealed class StatusOpreme : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -49,7 +56,7 @@ public sealed class StatusOpreme
     public ICollection<Oprema> Oprema { get; set; } = [];
 }
 
-public sealed class KategorijaArtikla
+public sealed class KategorijaArtikla : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -57,7 +64,7 @@ public sealed class KategorijaArtikla
     public ICollection<Artikal> Artikli { get; set; } = [];
 }
 
-public sealed class StatusArtikla
+public sealed class StatusArtikla : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -65,7 +72,7 @@ public sealed class StatusArtikla
     public ICollection<Artikal> Artikli { get; set; } = [];
 }
 
-public sealed class StatusRezervacije
+public sealed class StatusRezervacije : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;
@@ -73,7 +80,7 @@ public sealed class StatusRezervacije
     public ICollection<Rezervacija> Rezervacije { get; set; } = [];
 }
 
-public sealed class StatusPozivnice
+public sealed class StatusPozivnice : ISifarnik
 {
     public int Id { get; set; }
     public string Kod { get; set; } = string.Empty;

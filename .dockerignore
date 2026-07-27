@@ -1,0 +1,14 @@
+**/bin
+**/obj
+**/.dart_tool
+**/build
+**/.idea
+**/.vs
+**/.vscode
+**/*.user
+**/*.suo
+.git
+.env
+src/OpenAmp.Mobile
+src/OpenAmp.Desktop
+tests

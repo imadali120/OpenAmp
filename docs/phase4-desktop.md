@@ -1,50 +1,32 @@
-# FAZA 4 — Desktop aplikacija
+# FAZA 4 — Flutter desktop aplikacija
 
-Desktop aplikacija je WPF klijent za administratore i zaposlenike studija. Koristi isti REST API i SQL Server bazu kao mobilna aplikacija; desktop klijent ne pristupa bazi direktno.
+Desktop aplikacija je Flutter Windows klijent za administratore i zaposlenike studija. Koristi isti REST API kao mobilna aplikacija i ne pristupa bazi direktno.
 
 ## Implementirano
 
 - JWT prijava za uloge `ADMIN` i `ZAPOSLENIK`, uz automatsku obnovu access tokena
 - dashboard sa današnjim probama, aktivnim salama, opremom na najmu, niskim zalihama i sedmičnom zauzetošću
-- dodavanje, izmjena, deaktiviranje i galerija fotografija sala
-- inventar opreme, dodjela sali, stanje od 1 do 5 i status
-- prijava kvara, otvoreni servis, završetak servisa, trošak i kompletna servisna historija
-- upravljanje potrošnim artiklima i upozorenja kada količina dođe do minimalne zalihe
-- sedmični kalendar rezervacija po danima, kreiranje i izmjena termina/statusa
-- pregled i izmjena osnovnih podataka bendova, članova i žanra
-- pregled korisnika; administrator može promijeniti ulogu i aktivirati/deaktivirati račun
-- tamni OpenAmp interfejs sa narandžastim akcentom
-
-Izvještaji i sistem preporuka nisu dio ove faze. Implementiraju se zajedno u FAZI 5.
+- CRUD studija, sala, opreme, artikala i svih sistemskih šifarnika
+- inventar opreme, dodjela sali, stanje, status i servisna historija
+- pregled i izmjena rezervacija uz optimistic locking
+- pretraga i uređivanje bendova i korisničkih uloga
+- izvještaji prihoda i rezervacija, filtriranje perioda, PDF izvoz i direktna štampa
+- inline validacija svih administratorskih obrazaca
+- jedinstveni tamni OpenAmp interfejs sa narandžastim akcentom
 
 ## Pokretanje
 
-U prvom terminalu:
-
 ```powershell
-docker compose up -d
-dotnet run --project src/OpenAmp.Api --launch-profile http
+docker compose up --build -d
+cd src/OpenAmp.Mobile
+flutter pub get
+flutter run -d windows --dart-define=OPENAMP_API_URL=http://127.0.0.1:5264
 ```
 
-U drugom terminalu:
+Flutter plugini na Windowsu zahtijevaju uključen **Developer Mode**. Testni desktop računi su:
 
-```powershell
-dotnet run --project src/OpenAmp.Desktop
-```
-
-Desktop podrazumijevano koristi `http://localhost:5264`. Druga adresa API-ja može se zadati varijablom:
-
-```powershell
-$env:OPENAMP_API_URL = "http://localhost:5264"
-dotnet run --project src/OpenAmp.Desktop
-```
-
-Kada se API pokrene u `Development` okruženju, automatski se kreiraju lokalni računi ako već ne postoje:
-
-- `admin` / `OpenAmp1!`
-- `zaposlenik` / `OpenAmp1!`
-
-Ovi računi i lozinke namijenjeni su isključivo lokalnom razvoju.
+- `admin` / `test`
+- `zaposlenik` / `test`
 
 ## Desktop API
 
@@ -58,14 +40,7 @@ Zaštićene rute nalaze se ispod `api/desktop`:
 - `GET|POST|PUT /reservations`
 - `GET|PUT /bands`
 - `GET|PUT /users`
+- `GET /reports` i `GET /reports/pdf`
+- CRUD `/reference-data/{type}` i `/reference-data/studios/all`
 
-Sve rute zahtijevaju `ADMIN` ili `ZAPOSLENIK` JWT ulogu. Promjena uloge ili statusa korisnika dodatno zahtijeva `ADMIN`.
-
-## Baza
-
-Migracija `Phase4DesktopOperations` dodaje:
-
-- kolonu `Oprema.Stanje`
-- tabelu `ServisiOpreme`
-- relacije prema opremi i korisniku koji je prijavio kvar
-- ograničenja za stanje opreme i trošak servisa
+Sve rute zahtijevaju `ADMIN` ili `ZAPOSLENIK` JWT ulogu. Promjena korisnika i uređivanje sistemskih šifarnika dodatno zahtijevaju `ADMIN`.

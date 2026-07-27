@@ -1,37 +1,39 @@
 # OpenAmp
 
-OpenAmp je platforma za rezervaciju sala za muzičke probe, upravljanje bendovima, studijima, opremom i potrošnim artiklima.
+OpenAmp je informacioni sistem za rezervaciju sala za muzičke probe, upravljanje bendovima, studijima, opremom i prodajnim artiklima.
 
-Repozitorij sadrži:
+Sistem pokriva svih pet faza seminarskog rada:
 
-- FAZU 1: SQL Server bazu, EF Core model, migracije i seed podatke
-- FAZU 2: REST API, JWT autentikaciju, logiku rezervacija i Stripe plaćanje
-- FAZU 3: Flutter mobilnu aplikaciju za Android i iOS
-- FAZU 3.1: kompletiranje mobilnih rezervacija, profila, bendova, recenzija i Stripe lifecyclea
-- FAZU 4: WPF desktop aplikaciju za administratore i zaposlenike studija
-- FAZU 5: hibridni sistem preporuka, poslovne izvještaje i PDF izvoz
+- SQL Server bazu, EF Core model, migracije i razvojne podatke
+- .NET 8 REST API, JWT autentikaciju, rezervacije i Stripe plaćanje
+- Flutter mobilnu aplikaciju za muzičare
+- Flutter Windows aplikaciju za administratore i zaposlenike
+- hibridne preporuke, poslovne izvještaje, PDF izvoz i štampu
 
-## Implementirano
+## Tehnologije i arhitektura
 
-- .NET 8 slojevita arhitektura: `Domain`, `Application`, `Infrastructure` i `Api`
-- Entity Framework Core 8 i SQL Server 2022
-- JWT registracija, prijava emailom ili usernameom i rotacija refresh tokena
-- jedinstveni usernameovi, pozivnice za bend po usernameu i jedinstvena password politika
-- provjera termina, kalkulacija cijene, izmjena i otkazivanje rezervacije
-- Stripe Payment Intents, potpisani webhook i automatski refund
-- Flutter aplikacija sa Riverpod state managementom i Dio API klijentom
-- pretraga i detalji sala, satni slotovi, oprema, artikli i Stripe PaymentSheet
-- upravljanje bendovima, članovima i pozivnicama, historija proba i profil
-- upload profilnih, bend i studio/sala fotografija u SQL Server bazu
-- tamni mobilni interfejs sa OpenAmp narandžastom akcent bojom
-- WPF desktop dashboard, upravljanje salama, opremom, servisima, artiklima, rezervacijama, bendovima i korisnicima
-- tamni desktop interfejs sa sedmičnim kalendarom i OpenAmp narandžastom akcent bojom
-- izmjena/otkazivanje termina, refund pregled, recenzije i ponovno rezervisanje
-- trajno sačuvane sale, navigacija do studija i korisničke postavke
-- Stripe Customer Session za sačuvane kartice i oporavak napuštenog checkouta
-- Swagger/OpenAPI, health endpoint i testovi
-- preporuke sala, statistiku poslovanja i PDF izvještaje
-- Mermaid [ERD](docs/erd.md)
+- .NET 8: `Domain`, `Application`, `Infrastructure`, `Api` i `Worker`
+- Entity Framework Core 8 i SQL Server 2022, baza `220336`
+- CQRS handleri, servisi i repozitoriji
+- RabbitMQ za asinhronu obradu obavijesti o rezervacijama
+- Flutter za Android, iOS i Windows, uz Riverpod i Dio
+- Stripe Payment Intents, 3D Secure, webhook i automatski refund
+- JWT access token, rotirajući refresh token i role `ADMIN`, `ZAPOSLENIK`, `MUZICAR`
+- Swagger/OpenAPI, health check, automatske migracije i razvojni seed
+
+## Funkcionalnosti
+
+- registracija, prijava emailom ili usernameom, profilna fotografija i stroga password politika
+- jedinstveni usernameovi i pozivanje članova benda po usernameu
+- pretraga sala, galerija, raspoloživi slotovi, oprema i artikli
+- kalkulacija cijene, rezervacija, izmjena, otkazivanje i plaćanje
+- bendovi, članovi, pozivnice, historija proba, favoriti, recenzije i notifikacije
+- administracija studija, sala, opreme, servisa, artikala, rezervacija, bendova i korisnika
+- CRUD svih sistemskih šifarnika uz inline validaciju
+- Cosine Similarity, item-based collaborative filtering i dinamički hibridni scoring
+- statistika prihoda po salama i rezervacija po žanru, PDF izvoz i direktna štampa
+
+ER dijagram se nalazi u [docs/erd.md](docs/erd.md).
 
 ## Struktura
 
@@ -39,53 +41,85 @@ Repozitorij sadrži:
 src/
   OpenAmp.Domain/          Entiteti i domenska pravila
   OpenAmp.Application/     DTO modeli, CQRS komande/upiti i ugovori
-  OpenAmp.Infrastructure/  EF Core, autentikacija, rezervacije i Stripe
+  OpenAmp.Infrastructure/  EF Core, servisi, Stripe i RabbitMQ publisher
   OpenAmp.Api/             REST kontroleri, JWT, Swagger i middleware
-  OpenAmp.Mobile/          Flutter aplikacija za muzičare
-  OpenAmp.Desktop/         WPF aplikacija za studio
+  OpenAmp.Worker/          RabbitMQ background worker
+  OpenAmp.Mobile/          Flutter Android/iOS/Windows aplikacija
 tests/
   OpenAmp.Infrastructure.Tests/
 docs/
-  erd.md
-  phase2-api.md
-  phase3-mobile.md
-  phase4-desktop.md
-  phase5-recommendations-reports.md
 ```
 
-## Pokretanje baze i API-ja
+## Najbrže pokretanje kompletnog sistema
 
-Za razvoj su potrebni .NET 8 SDK i Docker Desktop.
+Potrebni su Docker Desktop i Flutter SDK. Za standardni Windows build potreban je Visual Studio Build Tools workload **Desktop development with C++**, uključujući komponentu **C++ ATL for latest v143 build tools**.
 
 ```powershell
-docker compose up -d
-dotnet run --project src/OpenAmp.Api --launch-profile http
+git clone https://github.com/imadali120/OpenAmp.git
+cd OpenAmp
+docker compose up --build -d
 ```
+
+Compose podiže SQL Server, RabbitMQ, API i Worker. API automatski kreira bazu `220336`, primjenjuje migracije i dodaje testne podatke.
 
 - Swagger: `http://localhost:5264/swagger`
 - health check: `http://localhost:5264/health`
+- RabbitMQ Management: `http://localhost:15672`
 
-U Development okruženju API automatski primjenjuje EF Core migracije. Razvojni SQL password i JWT ključ služe samo za lokalni rad.
+Stripe test ključevi su opcionalni i unose se samo lokalno kroz `.env`; primjer je u `.env.example`.
 
-## Pokretanje Flutter aplikacije
+## Testni računi
+
+Svi razvojni računi koriste lozinku `test`.
+
+| Aplikacija | Username | Uloga |
+|---|---|---|
+| Flutter Windows | `admin` | Administrator |
+| Flutter Windows | `zaposlenik` | Zaposlenik |
+| Flutter Android/iOS | `muzicar` | Muzičar |
+| Flutter Android/iOS | `jazz` | Muzičar |
+| Flutter Android/iOS | `metal` | Muzičar |
+
+## Flutter mobilna aplikacija
 
 ```powershell
 cd src/OpenAmp.Mobile
 flutter pub get
-flutter run --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264 --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_...
+flutter run -d emulator-5554 `
+  --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264 `
+  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_VAS_KLJUC
 ```
 
-`10.0.2.2` je adresa host računara iz Android emulatora. Za fizički uređaj koristi lokalnu IP adresu računara. Detaljne upute su u [dokumentaciji FAZE 3](docs/phase3-mobile.md).
+`10.0.2.2` je adresa host računara iz Android emulatora. Za fizički uređaj koristi lokalnu IP adresu računara.
 
-## Pokretanje desktop aplikacije
+## Flutter Windows aplikacija
 
-Dok su baza i API pokrenuti:
+Na Windowsu prvo uključite **Settings → System → For developers → Developer Mode**, jer Flutter plugini koriste symlinkove.
 
 ```powershell
-dotnet run --project src/OpenAmp.Desktop
+cd src/OpenAmp.Mobile
+flutter pub get
+flutter run -d windows --dart-define=OPENAMP_API_URL=http://127.0.0.1:5264
 ```
 
-Lokalni razvojni računi su `admin / OpenAmp1!` i `zaposlenik / OpenAmp1!`. Detaljne upute su u [dokumentaciji FAZE 4](docs/phase4-desktop.md).
+Nakon prijave `admin/test` ili `zaposlenik/test`, aplikacija automatski otvara desktop administratorski interfejs. Prijava muzičara otvara mobilni interfejs.
+
+Ako Developer Mode ili ATL nisu dostupni, repozitorij sadrži fallback build skriptu koja koristi službene Microsoft pakete bez trajne sistemske izmjene:
+
+```powershell
+.\scripts\build-windows.ps1
+```
+
+## Lokalno pokretanje API-ja bez Dockera
+
+SQL Server i RabbitMQ moraju biti dostupni, a lokalne tajne se postavljaju kroz .NET user-secrets.
+
+```powershell
+dotnet run --project .\src\OpenAmp.Api\OpenAmp.Api.csproj --launch-profile http
+dotnet run --project .\src\OpenAmp.Worker\OpenAmp.Worker.csproj
+```
+
+Ako se komanda pokreće iz `C:\Users\imado`, prvo pređite u direktorij repozitorija ili koristite punu putanju do `.csproj` fajla.
 
 ## Build i testovi
 
@@ -96,8 +130,10 @@ dotnet test OpenAmp.sln --configuration Release --no-build
 cd src/OpenAmp.Mobile
 flutter analyze
 flutter test
+flutter build apk --release
+flutter build windows --release
 ```
 
 ## Zaštita rezervacija
 
-`RowVersion` otkriva konkurentnu izmjenu postojeće rezervacije. Kreiranje i provjera preklapanja izvršavaju se u SQL Server `SERIALIZABLE` transakciji. Granice termina su poluotvorene (`[od, do)`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.
+`RowVersion` osigurava optimistic locking pri izmjeni rezervacije. Kreiranje termina i provjera preklapanja izvršavaju se u SQL Server `SERIALIZABLE` transakciji. Granice termina su poluotvorene (`[od, do)`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.
