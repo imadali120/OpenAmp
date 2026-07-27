@@ -5,6 +5,8 @@ using OpenAmp.Application.Common;
 using OpenAmp.Application.Desktop;
 using OpenAmp.Application.Mobile;
 using OpenAmp.Application.Payments;
+using OpenAmp.Application.Recommendations;
+using OpenAmp.Application.Reporting;
 using OpenAmp.Application.Reservations;
 using OpenAmp.Infrastructure.Auth;
 using OpenAmp.Infrastructure.Desktop;
@@ -13,6 +15,8 @@ using OpenAmp.Infrastructure.Media;
 using OpenAmp.Infrastructure.Payments;
 using OpenAmp.Infrastructure.Persistence;
 using OpenAmp.Infrastructure.Persistence.Seed;
+using OpenAmp.Infrastructure.Recommendations;
+using OpenAmp.Infrastructure.Reporting;
 using OpenAmp.Infrastructure.Reservations;
 
 namespace OpenAmp.Infrastructure.DependencyInjection;
@@ -36,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<OpenAmp.Application.Media.IMediaService, MediaService>();
         services.AddScoped<IStripeGateway, StripeGateway>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IRecommendationService, RecommendationService>();
+        services.AddScoped<IReportingService, ReportingService>();
         services.AddScoped<DevelopmentDataSeeder>();
         return services;
     }

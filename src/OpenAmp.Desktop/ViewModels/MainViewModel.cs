@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using Microsoft.Win32;
 using OpenAmp.Desktop.Infrastructure;
@@ -26,6 +27,11 @@ public sealed class MainViewModel : ObservableObject
     private string _equipmentSearch = "";
     private string _bandSearch = "";
     private DateOnly _weekStart = StartOfWeek(DateOnly.FromDateTime(DateTime.Today));
+    private BusinessReport _report = new();
+    private DateTime _reportFrom = new(DateTime.Today.Year, 1, 1);
+    private DateTime _reportTo = DateTime.Today;
+    private LookupItem? _selectedReportHall;
+    private LookupItem? _selectedReportGenre;
 
     public MainViewModel(OpenAmpApiClient api, AuthSession session)
     {
@@ -53,6 +59,8 @@ public sealed class MainViewModel : ObservableObject
         EditBandCommand = new AsyncRelayCommand(item => EditBandAsync(item as BandItem));
         EditUserCommand = new AsyncRelayCommand(item => EditUserAsync(item as UserItem), _ => IsAdmin);
         ApplyFiltersCommand = new RelayCommand(_ => ApplyFilters());
+        GenerateReportCommand = new AsyncRelayCommand(_ => LoadReportAsync());
+        ExportReportCommand = new AsyncRelayCommand(_ => ExportReportAsync());
         _ = InitializeAsync();
     }
 
@@ -71,6 +79,38 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<BandItem> Bands { get; } = [];
     public ObservableCollection<UserItem> Users { get; } = [];
     public ObservableCollection<WeekDayColumn> WeekDays { get; } = [];
+    public ObservableCollection<LookupItem> ReportHalls { get; } = [];
+    public ObservableCollection<LookupItem> ReportGenres { get; } = [];
+
+    public BusinessReport Report
+    {
+        get => _report;
+        private set => SetProperty(ref _report, value);
+    }
+
+    public DateTime ReportFrom
+    {
+        get => _reportFrom;
+        set => SetProperty(ref _reportFrom, value);
+    }
+
+    public DateTime ReportTo
+    {
+        get => _reportTo;
+        set => SetProperty(ref _reportTo, value);
+    }
+
+    public LookupItem? SelectedReportHall
+    {
+        get => _selectedReportHall;
+        set => SetProperty(ref _selectedReportHall, value);
+    }
+
+    public LookupItem? SelectedReportGenre
+    {
+        get => _selectedReportGenre;
+        set => SetProperty(ref _selectedReportGenre, value);
+    }
 
     public int SelectedPage
     {
@@ -94,6 +134,7 @@ public sealed class MainViewModel : ObservableObject
         4 => "Bendovi",
         5 => "Artikli",
         6 => "Korisnici",
+        7 => "Izvještaji",
         _ => "OpenAmp"
     };
 
@@ -148,6 +189,8 @@ public sealed class MainViewModel : ObservableObject
     public AsyncRelayCommand EditBandCommand { get; }
     public AsyncRelayCommand EditUserCommand { get; }
     public RelayCommand ApplyFiltersCommand { get; }
+    public AsyncRelayCommand GenerateReportCommand { get; }
+    public AsyncRelayCommand ExportReportCommand { get; }
 
     private async Task InitializeAsync()
     {
@@ -158,6 +201,7 @@ public sealed class MainViewModel : ObservableObject
             _allBands = await _api.GetBandsAsync();
             Replace(Halls, _allHalls);
             Replace(Bands, _allBands);
+            PrepareReportFilters();
             await LoadDashboardAsync();
         }, "Podaci su učitani.");
     }
@@ -192,6 +236,9 @@ public sealed class MainViewModel : ObservableObject
                 _allUsers = await _api.GetUsersAsync();
                 Replace(Users, _allUsers);
                 break;
+            case 7:
+                await LoadReportAsync();
+                break;
         }
     }, $"{PageTitle} je osvježen.");
 
@@ -199,6 +246,65 @@ public sealed class MainViewModel : ObservableObject
     {
         Dashboard = await _api.GetDashboardAsync();
         OnPropertyChanged(nameof(Dashboard));
+    }
+
+    private async Task LoadReportAsync()
+    {
+        if (ReportTo.Date < ReportFrom.Date)
+        {
+            throw new InvalidOperationException("Datum 'do' mora biti nakon datuma 'od'.");
+        }
+        Report = await _api.GetReportAsync(
+            DateTime.SpecifyKind(ReportFrom.Date, DateTimeKind.Local).ToUniversalTime(),
+            DateTime.SpecifyKind(ReportTo.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime(),
+            SelectedReportHall?.Id is > 0 ? SelectedReportHall.Id : null,
+            SelectedReportGenre?.Id is > 0 ? SelectedReportGenre.Id : null);
+    }
+
+    private async Task ExportReportAsync()
+    {
+        await RunAsync(async () =>
+        {
+            if (ReportTo.Date < ReportFrom.Date)
+            {
+                throw new InvalidOperationException("Datum 'do' mora biti nakon datuma 'od'.");
+            }
+            var dialog = new SaveFileDialog
+            {
+                Title = "Sačuvaj OpenAmp izvještaj",
+                Filter = "PDF dokument (*.pdf)|*.pdf",
+                FileName = $"OpenAmp-izvjestaj-{ReportFrom:yyyyMMdd}-{ReportTo:yyyyMMdd}.pdf",
+                AddExtension = true,
+                DefaultExt = ".pdf"
+            };
+            if (dialog.ShowDialog(Owner()) != true)
+            {
+                return;
+            }
+            var bytes = await _api.DownloadReportPdfAsync(
+                DateTime.SpecifyKind(ReportFrom.Date, DateTimeKind.Local).ToUniversalTime(),
+                DateTime.SpecifyKind(ReportTo.Date.AddDays(1), DateTimeKind.Local).ToUniversalTime(),
+                SelectedReportHall?.Id is > 0 ? SelectedReportHall.Id : null,
+                SelectedReportGenre?.Id is > 0 ? SelectedReportGenre.Id : null);
+            await File.WriteAllBytesAsync(dialog.FileName, bytes);
+        }, "PDF izvještaj je sačuvan.");
+    }
+
+    private void PrepareReportFilters()
+    {
+        Replace(ReportHalls,
+        [
+            new LookupItem { Id = 0, Kod = "ALL", Naziv = "Sve sale" },
+            .. _allHalls.OrderBy(x => x.Naziv).Select(x =>
+                new LookupItem { Id = x.Id, Kod = x.Id.ToString(CultureInfo.InvariantCulture), Naziv = x.Naziv })
+        ]);
+        Replace(ReportGenres,
+        [
+            new LookupItem { Id = 0, Kod = "ALL", Naziv = "Svi žanrovi" },
+            .. Lookups.Zanrovi
+        ]);
+        SelectedReportHall ??= ReportHalls.FirstOrDefault();
+        SelectedReportGenre ??= ReportGenres.FirstOrDefault();
     }
 
     private async Task LoadReservationsAsync()

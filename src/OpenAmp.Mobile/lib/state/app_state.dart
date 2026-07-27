@@ -25,6 +25,7 @@ class AppState {
     this.session,
     this.lookups,
     this.halls = const [],
+    this.recommendations = const [],
     this.bands = const [],
     this.receivedInvitations = const [],
     this.reservations = const [],
@@ -39,6 +40,7 @@ class AppState {
   final AuthSession? session;
   final MobileLookups? lookups;
   final List<HallSummary> halls;
+  final List<HallRecommendation> recommendations;
   final List<Band> bands;
   final List<ReceivedBandInvitation> receivedInvitations;
   final List<Reservation> reservations;
@@ -56,6 +58,7 @@ class AppState {
     bool clearSession = false,
     MobileLookups? lookups,
     List<HallSummary>? halls,
+    List<HallRecommendation>? recommendations,
     List<Band>? bands,
     List<ReceivedBandInvitation>? receivedInvitations,
     List<Reservation>? reservations,
@@ -70,6 +73,7 @@ class AppState {
     session: clearSession ? null : session ?? this.session,
     lookups: lookups ?? this.lookups,
     halls: halls ?? this.halls,
+    recommendations: recommendations ?? this.recommendations,
     bands: bands ?? this.bands,
     receivedInvitations: receivedInvitations ?? this.receivedInvitations,
     reservations: reservations ?? this.reservations,
@@ -156,6 +160,14 @@ class AppController extends Notifier<AppState> {
         lookups: values[0] as MobileLookups,
         halls: values[1] as List<HallSummary>,
       );
+      if (state.authenticated && state.bands.isNotEmpty) {
+        state = state.copyWith(
+          recommendations: await _repository.getRecommendations(
+            state.bands.first.id,
+            filters,
+          ),
+        );
+      }
     }, showBusy: state.halls.isEmpty);
   }
 
@@ -170,13 +182,22 @@ class AppController extends Notifier<AppState> {
         _repository.getFavoriteHallIds(),
         _repository.getSettings(),
       ]);
+      final bands = values[0] as List<Band>;
       state = state.copyWith(
-        bands: values[0] as List<Band>,
+        bands: bands,
         receivedInvitations: values[1] as List<ReceivedBandInvitation>,
         reservations: values[2] as List<Reservation>,
         profile: values[3] as ProfileOverview,
         favoriteHallIds: values[4] as Set<int>,
         settings: values[5] as UserSettings,
+      );
+      state = state.copyWith(
+        recommendations: bands.isEmpty
+            ? const []
+            : await _repository.getRecommendations(
+                bands.first.id,
+                const SearchFilters(),
+              ),
       );
       await LocalNotificationService.instance.syncReservations(
         enabled: state.settings?.pushNotifications ?? false,

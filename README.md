@@ -9,6 +9,7 @@ Repozitorij sadrži:
 - FAZU 3: Flutter mobilnu aplikaciju za Android i iOS
 - FAZU 3.1: kompletiranje mobilnih rezervacija, profila, bendova, recenzija i Stripe lifecyclea
 - FAZU 4: WPF desktop aplikaciju za administratore i zaposlenike studija
+- FAZU 5: hibridni sistem preporuka, poslovne izvještaje i PDF izvoz
 
 ## Implementirano
 
@@ -29,6 +30,7 @@ Repozitorij sadrži:
 - trajno sačuvane sale, navigacija do studija i korisničke postavke
 - Stripe Customer Session za sačuvane kartice i oporavak napuštenog checkouta
 - Swagger/OpenAPI, health endpoint i testovi
+- preporuke sala, statistiku poslovanja i PDF izvještaje
 - Mermaid [ERD](docs/erd.md)
 
 ## Struktura
@@ -47,6 +49,8 @@ docs/
   erd.md
   phase2-api.md
   phase3-mobile.md
+  phase4-desktop.md
+  phase5-recommendations-reports.md
 ```
 
 ## Pokretanje baze i API-ja

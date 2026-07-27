@@ -140,6 +140,22 @@
                             <TextBlock Grid.Column="1" Text="Korisnici" />
                         </Grid>
                     </Button>
+                    <Button Command="{Binding NavigateCommand}" CommandParameter="7">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedPage}" Value="7">
+                                        <Setter Property="Tag" Value="True" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                            <TextBlock Text="08" FontFamily="Bahnschrift" Foreground="{StaticResource AccentBrush}" FontSize="11" />
+                            <TextBlock Grid.Column="1" Text="Izvještaji" />
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
                 <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="16">
@@ -627,6 +643,152 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+                </TabItem>
+
+                <TabItem>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="274" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource Card}" Padding="22">
+                            <StackPanel>
+                                <TextBlock Text="PARAMETRI" Style="{StaticResource EyebrowText}" />
+                                <TextBlock Text="Period i filteri" FontFamily="Bahnschrift" FontSize="20"
+                                           FontWeight="SemiBold" Margin="0,6,0,24" />
+                                <TextBlock Text="OD" Style="{StaticResource EyebrowText}" />
+                                <DatePicker SelectedDate="{Binding ReportFrom}" Margin="0,6,0,16" />
+                                <TextBlock Text="DO" Style="{StaticResource EyebrowText}" />
+                                <DatePicker SelectedDate="{Binding ReportTo}" Margin="0,6,0,16" />
+                                <TextBlock Text="SALA" Style="{StaticResource EyebrowText}" />
+                                <ComboBox ItemsSource="{Binding ReportHalls}" SelectedItem="{Binding SelectedReportHall}"
+                                          Margin="0,6,0,16" />
+                                <TextBlock Text="ŽANR" Style="{StaticResource EyebrowText}" />
+                                <ComboBox ItemsSource="{Binding ReportGenres}" SelectedItem="{Binding SelectedReportGenre}"
+                                          Margin="0,6,0,24" />
+                                <Button Content="Prikaži izvještaj" Command="{Binding GenerateReportCommand}"
+                                        Style="{StaticResource AccentButton}" HorizontalContentAlignment="Center" />
+                                <Button Content="Izvezi PDF" Command="{Binding ExportReportCommand}"
+                                        Style="{StaticResource QuietButton}" HorizontalContentAlignment="Center"
+                                        Margin="0,9,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <UniformGrid Columns="4" Margin="0,0,0,18">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,9,0" Padding="18">
+                                        <StackPanel>
+                                            <TextBlock Text="PRIHOD" Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="{Binding Report.UkupanPrihod, StringFormat={}{0:N2} KM}"
+                                                       Style="{StaticResource MetricNumber}" Margin="0,8,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Card}" Margin="3,0,6,0" Padding="18">
+                                        <StackPanel>
+                                            <TextBlock Text="REZERVACIJE" Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="{Binding Report.UkupnoRezervacija}"
+                                                       Style="{StaticResource MetricNumber}" Margin="0,8,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Card}" Margin="6,0,3,0" Padding="18">
+                                        <StackPanel>
+                                            <TextBlock Text="PROSJEK" Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="{Binding Report.ProsjecnaVrijednostRezervacije, StringFormat={}{0:N2} KM}"
+                                                       Style="{StaticResource MetricNumber}" Margin="0,8,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Card}" Margin="9,0,0,0" Padding="18">
+                                        <StackPanel>
+                                            <TextBlock Text="SATI" Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="{Binding Report.UkupnoSati, StringFormat={}{0:N1} h}"
+                                                       Style="{StaticResource MetricNumber}" Margin="0,8,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.45*" />
+                                        <ColumnDefinition Width="18" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Style="{StaticResource Card}" Padding="22">
+                                        <StackPanel>
+                                            <TextBlock Text="PRIHOD PO SALAMA" Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="Raspodjela prihoda" FontFamily="Bahnschrift" FontSize="20"
+                                                       FontWeight="SemiBold" Margin="0,6,0,22" />
+                                            <ItemsControl ItemsSource="{Binding Report.PrihodPoSalama}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,17">
+                                                            <Grid>
+                                                                <TextBlock Text="{Binding Sala}" FontWeight="SemiBold" />
+                                                                <TextBlock Text="{Binding Prihod, StringFormat={}{0:N2} KM}"
+                                                                           HorizontalAlignment="Right" FontFamily="Bahnschrift" />
+                                                            </Grid>
+                                                            <TextBlock Text="{Binding Studio}" Style="{StaticResource MutedText}"
+                                                                       FontSize="11" Margin="0,3,0,7" />
+                                                            <ProgressBar Value="{Binding Postotak}" Maximum="100" Height="5" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="Nema evidentiranog prihoda za odabrani period." Margin="0,4">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Report.PrihodPoSalama.Count}" Value="0">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="22">
+                                        <StackPanel>
+                                            <TextBlock Text="REZERVACIJE PO ŽANRU" Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="Struktura rezervacija" FontFamily="Bahnschrift" FontSize="20"
+                                                       FontWeight="SemiBold" Margin="0,6,0,22" />
+                                            <ItemsControl ItemsSource="{Binding Report.RezervacijePoZanrovima}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,17">
+                                                            <Grid>
+                                                                <TextBlock Text="{Binding Zanr}" FontWeight="SemiBold" />
+                                                                <TextBlock Text="{Binding BrojRezervacija, StringFormat={}{0} rezervacija}"
+                                                                           HorizontalAlignment="Right" Style="{StaticResource MutedText}" />
+                                                            </Grid>
+                                                            <ProgressBar Value="{Binding Postotak}" Maximum="100"
+                                                                         Height="5" Margin="0,8,0,0" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="Nema rezervacija za odabrani period." Margin="0,4">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Report.RezervacijePoZanrovima.Count}" Value="0">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </TabItem>
             </TabControl>
 

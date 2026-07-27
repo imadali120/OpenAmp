@@ -202,3 +202,33 @@ public sealed class WeekDayColumn
     public string DatumTekst { get; init; } = "";
     public List<ReservationItem> Rezervacije { get; init; } = [];
 }
+
+public sealed class RevenueByHall
+{
+    public int SalaId { get; set; }
+    public string Sala { get; set; } = "";
+    public string Studio { get; set; } = "";
+    public decimal Prihod { get; set; }
+    public int BrojRezervacija { get; set; }
+    public double Postotak { get; set; }
+}
+
+public sealed class ReservationsByGenre
+{
+    public int ZanrId { get; set; }
+    public string Zanr { get; set; } = "";
+    public int BrojRezervacija { get; set; }
+    public double Postotak { get; set; }
+}
+
+public sealed class BusinessReport
+{
+    public DateTime PeriodOdUtc { get; set; }
+    public DateTime PeriodDoUtc { get; set; }
+    public decimal UkupanPrihod { get; set; }
+    public int UkupnoRezervacija { get; set; }
+    public decimal ProsjecnaVrijednostRezervacije { get; set; }
+    public decimal UkupnoSati { get; set; }
+    public List<RevenueByHall> PrihodPoSalama { get; set; } = [];
+    public List<ReservationsByGenre> RezervacijePoZanrovima { get; set; } = [];
+}

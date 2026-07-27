@@ -62,6 +62,20 @@ public sealed class OpenAmpApiClient : IDisposable
     }
     public Task<List<UserItem>> GetUsersAsync() => GetAsync<List<UserItem>>("api/desktop/users");
 
+    public Task<BusinessReport> GetReportAsync(
+        DateTime fromUtc,
+        DateTime toUtc,
+        int? hallId,
+        int? genreId) =>
+        GetAsync<BusinessReport>(ReportPath("api/desktop/reports", fromUtc, toUtc, hallId, genreId));
+
+    public Task<byte[]> DownloadReportPdfAsync(
+        DateTime fromUtc,
+        DateTime toUtc,
+        int? hallId,
+        int? genreId) =>
+        GetBytesAsync(ReportPath("api/desktop/reports/pdf", fromUtc, toUtc, hallId, genreId));
+
     public Task<List<ReservationItem>> GetReservationsAsync(DateTime fromUtc, DateTime toUtc) =>
         GetAsync<List<ReservationItem>>(
             $"api/desktop/reservations?fromUtc={Uri.EscapeDataString(fromUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture))}&toUtc={Uri.EscapeDataString(toUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture))}");
@@ -124,6 +138,18 @@ public sealed class OpenAmpApiClient : IDisposable
             response = await _http.GetAsync(path);
         }
         return await ReadAsync<T>(response);
+    }
+
+    private async Task<byte[]> GetBytesAsync(string path)
+    {
+        var response = await _http.GetAsync(path);
+        if (response.StatusCode == HttpStatusCode.Unauthorized && await RefreshAccessTokenAsync())
+        {
+            response.Dispose();
+            response = await _http.GetAsync(path);
+        }
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadAsByteArrayAsync();
     }
 
     private async Task<T> PostAsync<T>(string path, object request)
@@ -222,6 +248,26 @@ public sealed class OpenAmpApiClient : IDisposable
         ".webp" => "image/webp",
         _ => "image/jpeg"
     };
+
+    private static string ReportPath(
+        string endpoint,
+        DateTime fromUtc,
+        DateTime toUtc,
+        int? hallId,
+        int? genreId)
+    {
+        var query = $"fromUtc={Uri.EscapeDataString(fromUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture))}"
+            + $"&toUtc={Uri.EscapeDataString(toUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture))}";
+        if (hallId.HasValue)
+        {
+            query += $"&hallId={hallId.Value}";
+        }
+        if (genreId.HasValue)
+        {
+            query += $"&genreId={genreId.Value}";
+        }
+        return $"{endpoint}?{query}";
+    }
 
     private string? AbsoluteUrl(string? value)
     {

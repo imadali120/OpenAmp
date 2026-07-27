@@ -86,6 +86,36 @@ class OpenAmpRepository {
     }
   }
 
+  Future<List<HallRecommendation>> getRecommendations(
+    int bandId,
+    SearchFilters filters,
+  ) async {
+    try {
+      final response = await _apiClient.dio.get<List<dynamic>>(
+        '/api/recommendations/bands/$bandId/halls',
+        queryParameters: {
+          'limit': 5,
+          if (filters.genreCode != null) 'genre': filters.genreCode,
+          if (filters.minimumCapacity != null)
+            'minimumCapacity': filters.minimumCapacity,
+          if (filters.equipmentCategoryCode != null)
+            'equipmentCategory': filters.equipmentCategoryCode,
+          if (filters.startsAt != null)
+            'fromUtc': filters.startsAt!.toUtc().toIso8601String(),
+          if (filters.endsAt != null)
+            'toUtc': filters.endsAt!.toUtc().toIso8601String(),
+        },
+      );
+      return response.data!
+          .map(
+            (item) => HallRecommendation.fromJson(item as Map<String, dynamic>),
+          )
+          .toList();
+    } catch (error) {
+      _apiClient.throwApiError(error);
+    }
+  }
+
   Future<HallDetails> getHall(int id) async {
     try {
       final response = await _apiClient.dio.get<Map<String, dynamic>>(

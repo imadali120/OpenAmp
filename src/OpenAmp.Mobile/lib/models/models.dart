@@ -74,6 +74,34 @@ class HallSummary {
   );
 }
 
+class HallRecommendation {
+  const HallRecommendation({
+    required this.hall,
+    required this.score,
+    required this.contentScore,
+    required this.collaborativeScore,
+    required this.alpha,
+    required this.reason,
+  });
+
+  final HallSummary hall;
+  final double score;
+  final double contentScore;
+  final double collaborativeScore;
+  final double alpha;
+  final String reason;
+
+  factory HallRecommendation.fromJson(Map<String, dynamic> json) =>
+      HallRecommendation(
+        hall: HallSummary.fromJson(json['sala'] as Map<String, dynamic>),
+        score: (json['score'] as num).toDouble(),
+        contentScore: (json['contentScore'] as num).toDouble(),
+        collaborativeScore: (json['collaborativeScore'] as num).toDouble(),
+        alpha: (json['alpha'] as num).toDouble(),
+        reason: json['razlog'] as String,
+      );
+}
+
 class EquipmentItem {
   const EquipmentItem({
     required this.id,

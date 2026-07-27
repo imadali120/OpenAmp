@@ -189,6 +189,25 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      if (!_favoritesOnly &&
+                          state.recommendations.isNotEmpty) ...[
+                        const SectionEyebrow('Preporučeno'),
+                        const SizedBox(height: 11),
+                        SizedBox(
+                          height: 172,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: state.recommendations.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (context, index) =>
+                                _RecommendationCard(
+                                  item: state.recommendations[index],
+                                ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -254,6 +273,84 @@ class _HallSearchScreenState extends ConsumerState<HallSearchScreen> {
       ),
     );
   }
+}
+
+class _RecommendationCard extends StatelessWidget {
+  const _RecommendationCard({required this.item});
+
+  final HallRecommendation item;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 255,
+    child: Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => HallDetailsScreen(hallId: item.hall.id),
+          ),
+        ),
+        child: Row(
+          children: [
+            HallImage(
+              url: item.hall.imageUrl,
+              width: 86,
+              height: 172,
+              borderRadius: 0,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.hall.studio.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: .8,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      item.hall.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const Spacer(),
+                    Text(
+                      item.reason,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 10,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      money(item.hall.hourlyPrice),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _FilterPill extends StatelessWidget {
