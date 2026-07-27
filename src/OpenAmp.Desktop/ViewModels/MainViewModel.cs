@@ -13,6 +13,7 @@ public sealed class MainViewModel : ObservableObject
 {
     private readonly OpenAmpApiClient _api;
     private readonly AuthSession _session;
+    private readonly string _todayLabel;
     private List<HallItem> _allHalls = [];
     private List<EquipmentItem> _allEquipment = [];
     private List<ArticleItem> _allArticles = [];
@@ -30,6 +31,9 @@ public sealed class MainViewModel : ObservableObject
     {
         _api = api;
         _session = session;
+        _todayLabel = DateTime.Today.ToString(
+            "dddd, d. MMMM",
+            CultureInfo.GetCultureInfo("bs-Latn-BA"));
         NavigateCommand = new RelayCommand(parameter => SelectedPage = Convert.ToInt32(parameter, CultureInfo.InvariantCulture));
         RefreshCommand = new AsyncRelayCommand(_ => LoadCurrentPageAsync());
         AddHallCommand = new AsyncRelayCommand(_ => EditHallAsync(null));
@@ -54,6 +58,7 @@ public sealed class MainViewModel : ObservableObject
 
     public string CurrentUser => $"{_session.Korisnik.Ime} {_session.Korisnik.Prezime}";
     public string CurrentRole => _session.Korisnik.Uloga;
+    public string TodayLabel => _todayLabel;
     public string Initials => string.Concat(
         _session.Korisnik.Ime.FirstOrDefault(),
         _session.Korisnik.Prezime.FirstOrDefault()).ToUpperInvariant();
@@ -82,7 +87,7 @@ public sealed class MainViewModel : ObservableObject
 
     public string PageTitle => SelectedPage switch
     {
-        0 => "Dashboard",
+        0 => "Pregled",
         1 => "Sale",
         2 => "Oprema",
         3 => "Rezervacije",

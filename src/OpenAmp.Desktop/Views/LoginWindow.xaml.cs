@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using OpenAmp.Desktop.Infrastructure;
 using OpenAmp.Desktop.ViewModels;
 
 namespace OpenAmp.Desktop.Views;
@@ -8,6 +9,7 @@ public partial class LoginWindow : Window
 {
     public LoginWindow()
     {
+        WindowAppearance.UseOpenAmpChrome(this);
         InitializeComponent();
         Loaded += (_, _) =>
         {

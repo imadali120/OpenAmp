@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using OpenAmp.Desktop.Infrastructure;
 using OpenAmp.Desktop.Models;
 
 namespace OpenAmp.Desktop.Views;
@@ -237,6 +238,7 @@ internal sealed class FormDialog : Window
 
     public FormDialog(Window owner, string title)
     {
+        WindowAppearance.UseOpenAmpChrome(this);
         Owner = owner;
         Title = title;
         Width = 520;
@@ -244,7 +246,14 @@ internal sealed class FormDialog : Window
         SizeToContent = SizeToContent.Height;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ResizeMode = ResizeMode.NoResize;
-        var root = new Grid { Margin = new Thickness(26) };
+        Background = (System.Windows.Media.Brush)FindResource("BackgroundBrush");
+        Foreground = (System.Windows.Media.Brush)FindResource("TextBrush");
+        FontFamily = new System.Windows.Media.FontFamily("Segoe UI Variable Text, Segoe UI");
+        var root = new Grid
+        {
+            Margin = new Thickness(28),
+            Background = (System.Windows.Media.Brush)FindResource("BackgroundBrush")
+        };
         root.RowDefinitions.Add(new RowDefinition());
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         var scroll = new ScrollViewer
