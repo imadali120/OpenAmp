@@ -137,3 +137,12 @@ flutter build windows --release
 ## Zaštita rezervacija
 
 `RowVersion` osigurava optimistic locking pri izmjeni rezervacije. Kreiranje termina i provjera preklapanja izvršavaju se u SQL Server `SERIALIZABLE` transakciji. Granice termina su poluotvorene (`[od, do)`), pa termin 10:00–12:00 ne blokira termin koji počinje tačno u 12:00.
+
+## Artefakti za predaju
+
+- Dokument sistema preporuka: [`output/pdf/recommender-dokumentacija.pdf`](output/pdf/recommender-dokumentacija.pdf)
+- Android i Windows release buildovi: [`output/builds/fit-build-2026-07-30.zip`](output/builds/fit-build-2026-07-30.zip)
+- Lozinka build arhive: `fit`
+- Build manifest i SHA-256 vrijednosti: [`output/builds/BUILD-MANIFEST.txt`](output/builds/BUILD-MANIFEST.txt)
+
+Arhiva sadrži finalni Android APK i kompletan Flutter Windows `Release` folder. Veličina arhive je manja od 90 MB, pa dodatni `.z01` dijelovi nisu potrebni.

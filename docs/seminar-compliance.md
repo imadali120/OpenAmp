@@ -4,7 +4,7 @@ Ovaj dokument mapira zahtjeve iz uputa za seminarski rad na implementaciju u Ope
 
 | Kriterij | Implementacija / dokaz |
 |---|---|
-| Javni GitHub repozitorij | `https://github.com/imadali120/OpenAmp` |
+| Javni GitHub repozitorij | `https://github.com/imadali120/OpenAmp` - visibility se prebacuje na Public neposredno prije predaje |
 | Baza nazvana brojem indeksa | SQL Server baza `220336` u development konfiguraciji i Docker Composeu |
 | Najmanje deset povezanih tabela | EF Core model sadrži 29 tabela; ERD je u `docs/erd.md` |
 | Migracije i početni podaci | EF Core migracije i `DevelopmentDataSeeder` |
@@ -35,3 +35,12 @@ Ovaj dokument mapira zahtjeve iz uputa za seminarski rad na implementaciju u Ope
 | `muzicar` | `test` | Muzičar |
 
 Pravi Stripe ključevi nisu dio repozitorija. Postavljaju se lokalno kroz `.env`, .NET user-secrets ili Flutter `--dart-define`.
+
+## Artefakti za predaju
+
+- Dokument sistema preporuka: `output/pdf/recommender-dokumentacija.pdf`
+- Android i Windows release buildovi: `output/builds/fit-build-2026-07-30.zip`
+- Lozinka build arhive: `fit`
+- Build manifest, hash vrijednosti i rezultati provjere: `output/builds/BUILD-MANIFEST.txt`
+
+Build arhiva je manja od 90 MB, pa dodatni `.z01` dijelovi nisu potrebni.

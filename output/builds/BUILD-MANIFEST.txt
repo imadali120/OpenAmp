@@ -1,0 +1,43 @@
+OPENAMP RELEASE BUILD MANIFEST
+==============================
+
+Build date: 2026-07-30
+Archive password: fit
+
+ANDROID
+-------
+Path in archive: android/flutter-apk/app-release.apk
+Application ID: ba.openamp.openamp_mobile
+Version: 1.0.0 (1)
+Minimum SDK: 24
+Target SDK: 36
+API URL: http://10.0.2.2:5264
+Size: 68862239 bytes
+SHA-256: 51993D1CF83F76DEE0B3F641BC15A8F078AA3F503A7D2FB1E6F39145AA0596FE
+Verification: old package removed from AVD, release APK installed, launched,
+muzicar/test login completed, recommendation results loaded from the API.
+
+WINDOWS
+-------
+Path in archive: windows/Release/openamp_mobile.exe
+API URL: http://127.0.0.1:5264
+Release folder: 22 files, 36.34 MB
+EXE size: 59392 bytes
+EXE SHA-256: 157D1BF5F7AEC73ABF91B919D7B568B3128C47360953FB5B2E71BDCD84F3F4A9
+Verification: executable launched from the Release folder and remained
+responsive with window title "OpenAmp Studio".
+
+QUALITY CHECKS
+--------------
+.NET build: succeeded, 0 warnings, 0 errors
+.NET tests: 44 passed, 0 failed
+Flutter analyze: no issues found
+Flutter tests: 5 passed, 0 failed
+API health check: HTTP 200 Healthy
+
+BUILD COMMANDS
+--------------
+flutter clean
+flutter pub get
+flutter build apk --release --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264
+scripts/build-windows.ps1 -ApiUrl http://127.0.0.1:5264
