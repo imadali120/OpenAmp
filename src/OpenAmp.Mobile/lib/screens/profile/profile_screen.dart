@@ -156,6 +156,43 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            if (profile.favoriteHall != null || profile.topGenre != null) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.paper,
+                  borderRadius: BorderRadius.circular(AppRadii.medium),
+                ),
+                child: Row(
+                  children: [
+                    if (profile.favoriteHall != null)
+                      Expanded(
+                        child: _ProfileInsight(
+                          label: 'Omiljena sala',
+                          value: profile.favoriteHall!,
+                        ),
+                      ),
+                    if (profile.favoriteHall != null &&
+                        profile.topGenre != null)
+                      const SizedBox(
+                        height: 38,
+                        child: VerticalDivider(color: AppColors.line),
+                      ),
+                    if (profile.topGenre != null)
+                      Expanded(
+                        child: _ProfileInsight(
+                          label: 'Najčešći žanr',
+                          value: profile.topGenre!,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadii.medium),
@@ -625,6 +662,31 @@ class _Stat extends StatelessWidget {
         ],
       ),
     ),
+  );
+}
+
+class _ProfileInsight extends StatelessWidget {
+  const _ProfileInsight({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+    ],
   );
 }
 
