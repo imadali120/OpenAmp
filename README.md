@@ -79,6 +79,17 @@ Svi razvojni računi koriste lozinku `test`.
 | Flutter Android/iOS | `muzicar` | Muzičar |
 | Flutter Android/iOS | `jazz` | Muzičar |
 | Flutter Android/iOS | `metal` | Muzičar |
+| Flutter Android/iOS | `sara.vokal` | Muzičar / osnivač benda |
+| Flutter Android/iOS | `adnan.bas` | Muzičar / član bendova |
+| Flutter Android/iOS | `lejla.keys` | Muzičar / osnivač benda |
+| Flutter Android/iOS | `tarik.drums` | Muzičar / član bendova |
+| Flutter Android/iOS | `nina.guitar` | Muzičar / član bendova |
+| Flutter Android/iOS | `emir.vokal` | Muzičar |
+
+Razvojni seed dodaje i fotografije sala, bendova i profila, članove bendova,
+pozivnicu, favorite, historijske i buduće rezervacije, recenzije, opremu,
+artikle, nisku zalihu i otvoren servisni zapis. Seed je idempotentan i može se
+sigurno ponovo pokrenuti restartovanjem API kontejnera.
 
 ## Flutter mobilna aplikacija
 

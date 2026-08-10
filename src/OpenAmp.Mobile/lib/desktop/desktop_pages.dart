@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:openamp_mobile/core/config/app_config.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 import 'package:openamp_mobile/desktop/admin_repository.dart';
 import 'package:printing/printing.dart';
@@ -209,6 +210,7 @@ class HallsPage extends StatelessWidget {
     searchHint: 'Pretraži sale ili studio',
     load: (query) => repository.halls(search: query),
     columns: const [
+      _Column('', 'slikaUrl', image: true),
       _Column('Naziv', 'naziv'),
       _Column('Studio', 'studio'),
       _Column('Kapacitet', 'kapacitet'),
@@ -407,6 +409,7 @@ class BandsPage extends StatelessWidget {
     searchHint: 'Pretraži bend',
     load: (query) => repository.bands(search: query),
     columns: const [
+      _Column('', 'slikaUrl', image: true),
       _Column('Naziv', 'naziv'),
       _Column('Žanr', 'zanr'),
       _Column('Članovi', 'clanovi', listLength: true),
@@ -445,6 +448,7 @@ class UsersPage extends StatelessWidget {
     searchHint: 'Pretraži ime, username ili email',
     load: (query) => repository.users(search: query),
     columns: const [
+      _Column('', 'slikaUrl', image: true),
       _Column('Username', 'username'),
       _Column('Ime', 'ime'),
       _Column('Prezime', 'prezime'),
@@ -1060,6 +1064,7 @@ class _Column {
     this.boolean = false,
     this.dateTime = false,
     this.listLength = false,
+    this.image = false,
   });
   final String label;
   final String key;
@@ -1068,6 +1073,7 @@ class _Column {
   final bool boolean;
   final bool dateTime;
   final bool listLength;
+  final bool image;
 }
 
 class _Cell extends StatelessWidget {
@@ -1077,6 +1083,23 @@ class _Cell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (column.image) {
+      final url = AppConfig.resolveMediaUrl(value?.toString());
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadii.small),
+        child: SizedBox(
+          width: 52,
+          height: 38,
+          child: url == null
+              ? const _ImagePlaceholder()
+              : Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const _ImagePlaceholder(),
+                ),
+        ),
+      );
+    }
     if (column.badge) return _Badge(value?.toString() ?? '—');
     if (column.boolean) {
       return Icon(
@@ -1096,6 +1119,16 @@ class _Cell extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
     );
   }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) => const ColoredBox(
+    color: AppColors.paperMuted,
+    child: Icon(Icons.image_outlined, size: 18, color: AppColors.textMuted),
+  );
 }
 
 enum _FieldType { text, email, integer, decimal, dropdown, boolean, dateTime }

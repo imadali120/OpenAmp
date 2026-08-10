@@ -195,6 +195,7 @@ public sealed record DesktopKorisnikDto(
     string Prezime,
     string Email,
     string? Telefon,
+    string? SlikaUrl,
     int UlogaId,
     string Uloga,
     string UlogaKod,

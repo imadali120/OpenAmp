@@ -543,7 +543,7 @@ public sealed class DesktopAdminService(
         return await dbContext.Korisnici.AsNoTracking().Include(x => x.Uloga)
             .Where(x => x.Id == id).Select(x => new DesktopKorisnikDto(
                 x.Id, x.Username, x.Ime, x.Prezime, x.Email, x.Telefon,
-                x.UlogaId, x.Uloga.Naziv, x.Uloga.Kod, x.Aktivan, x.KreiranUtc))
+                x.FotografijaUrl, x.UlogaId, x.Uloga.Naziv, x.Uloga.Kod, x.Aktivan, x.KreiranUtc))
             .SingleAsync(cancellationToken);
     }
 
@@ -650,8 +650,8 @@ public sealed class DesktopAdminService(
                 c.KorisnikId == x.OsnivacId)).ToArray());
 
     private static DesktopKorisnikDto UKorisnikDto(Korisnik x) => new(
-        x.Id, x.Username, x.Ime, x.Prezime, x.Email, x.Telefon, x.UlogaId,
-        x.Uloga.Naziv, x.Uloga.Kod, x.Aktivan, x.KreiranUtc);
+        x.Id, x.Username, x.Ime, x.Prezime, x.Email, x.Telefon, x.FotografijaUrl,
+        x.UlogaId, x.Uloga.Naziv, x.Uloga.Kod, x.Aktivan, x.KreiranUtc);
 
     private static void ValidirajSalu(SacuvajSaluDto dto)
     {
