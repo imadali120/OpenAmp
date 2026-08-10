@@ -64,6 +64,7 @@ class NotificationsScreen extends ConsumerWidget {
                           onChanged: state.busy
                               ? null
                               : (value) => _save(
+                                  context,
                                   ref,
                                   UserSettings(
                                     pushNotifications:
@@ -141,44 +142,79 @@ class NotificationsScreen extends ConsumerWidget {
     if (enabled) {
       final granted = await LocalNotificationService.instance
           .requestPermission();
-      if (!granted) {
+      if (granted != true) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Dozvola za notifikacije nije odobrena.'),
+            SnackBar(
+              content: Text(
+                granted == null
+                    ? 'Notifikacije nisu dostupne na ovom uređaju.'
+                    : 'Dozvola za notifikacije nije odobrena.',
+              ),
             ),
           );
         }
         return;
       }
     }
+    if (!context.mounted) return;
     final next = UserSettings(
       pushNotifications: enabled,
       emailNotifications: current.emailNotifications,
       language: current.language,
       publicProfile: current.publicProfile,
     );
-    await _save(ref, next);
+    final saved = await _save(context, ref, next);
+    if (!saved) return;
     await LocalNotificationService.instance.syncReservations(
       enabled: enabled,
       reservations: ref.read(appControllerProvider).reservations,
     );
   }
 
-  Future<void> _save(WidgetRef ref, UserSettings settings) async {
+  Future<bool> _save(
+    BuildContext context,
+    WidgetRef ref,
+    UserSettings settings,
+  ) async {
     try {
       await ref.read(appControllerProvider.notifier).updateSettings(settings);
-    } catch (_) {}
+      return true;
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Postavke nisu sačuvane: $error')),
+        );
+      }
+      return false;
+    }
   }
 
   Future<void> _sendTest(BuildContext context) async {
     final granted = await LocalNotificationService.instance.requestPermission();
-    if (!granted) return;
-    await LocalNotificationService.instance.showTest();
-    if (context.mounted) {
+    if (!context.mounted) return;
+    if (granted != true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Testna notifikacija je poslana.')),
+        SnackBar(
+          content: Text(
+            granted == null
+                ? 'Notifikacije nisu dostupne na ovom uređaju.'
+                : 'Dozvola za notifikacije nije odobrena.',
+          ),
+        ),
       );
+      return;
     }
+    final sent = await LocalNotificationService.instance.showTest();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          sent
+              ? 'Testna notifikacija je poslana.'
+              : 'Testnu notifikaciju nije moguće poslati.',
+        ),
+      ),
+    );
   }
 }

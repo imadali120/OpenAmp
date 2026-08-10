@@ -1,7 +1,7 @@
 OPENAMP RELEASE BUILD MANIFEST
 ==============================
 
-Build date: 2026-07-30
+Build date: 2026-08-10
 Archive password: fit
 
 ANDROID
@@ -12,10 +12,11 @@ Version: 1.0.0 (1)
 Minimum SDK: 24
 Target SDK: 36
 API URL: http://10.0.2.2:5264
-Size: 68862239 bytes
-SHA-256: 51993D1CF83F76DEE0B3F641BC15A8F078AA3F503A7D2FB1E6F39145AA0596FE
-Verification: old package removed from AVD, release APK installed, launched,
-muzicar/test login completed, recommendation results loaded from the API.
+Size: 68862736 bytes
+SHA-256: 8F7A19C8CB2ACBB39C4FC3E87701E04D9916FFA5C6924ED1396A538BA35DCCDE
+Verification: release APK installed and launched on emulator-5554. Test
+notification was posted on the openamp_rehearsals channel without runtime,
+platform or icon errors.
 
 WINDOWS
 -------
@@ -33,11 +34,11 @@ QUALITY CHECKS
 .NET tests: 44 passed, 0 failed
 Flutter analyze: no issues found
 Flutter tests: 5 passed, 0 failed
+NuGet vulnerability audit: no known vulnerable packages
 API health check: HTTP 200 Healthy
 
 BUILD COMMANDS
 --------------
-flutter clean
 flutter pub get
-flutter build apk --release --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264
+flutter build apk --release --dart-define=OPENAMP_API_URL=http://10.0.2.2:5264 --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_VAS_KLJUC
 scripts/build-windows.ps1 -ApiUrl http://127.0.0.1:5264

@@ -37,24 +37,24 @@ class ApiClient {
               request.extra['retried'] != true &&
               sessionStore.current?.refreshToken != null;
           if (canRefresh) {
+            AuthSession refreshed;
             try {
-              final response =
-                  await Dio(
-                    BaseOptions(baseUrl: AppConfig.apiBaseUrl),
-                  ).post<Map<String, dynamic>>(
-                    '/api/auth/refresh',
-                    data: {'refreshToken': sessionStore.current!.refreshToken},
-                  );
-              final refreshed = AuthSession.fromAuthResponse(response.data!);
-              await sessionStore.save(refreshed);
-              request.extra['retried'] = true;
-              request.headers['Authorization'] =
-                  'Bearer ' + refreshed.accessToken;
-              handler.resolve(await dio.fetch<dynamic>(request));
-              return;
-            } on DioException {
+              refreshed = await _refreshSession();
+            } catch (_) {
               await sessionStore.clear();
+              handler.next(error);
+              return;
             }
+
+            request.extra['retried'] = true;
+            request.headers['Authorization'] =
+                'Bearer ' + refreshed.accessToken;
+            try {
+              handler.resolve(await dio.fetch<dynamic>(request));
+            } on DioException catch (retryError) {
+              handler.next(retryError);
+            }
+            return;
           }
           handler.next(error);
         },
@@ -64,6 +64,43 @@ class ApiClient {
 
   final SessionStore sessionStore;
   final Dio dio;
+  Future<AuthSession>? _refreshInProgress;
+
+  Future<AuthSession> _refreshSession() {
+    final activeRefresh = _refreshInProgress;
+    if (activeRefresh != null) return activeRefresh;
+
+    final refresh = _performRefresh();
+    _refreshInProgress = refresh;
+    return refresh.whenComplete(() {
+      if (identical(_refreshInProgress, refresh)) {
+        _refreshInProgress = null;
+      }
+    });
+  }
+
+  Future<AuthSession> _performRefresh() async {
+    final refreshToken = sessionStore.current?.refreshToken;
+    if (refreshToken == null) {
+      throw const ApiException('Sesija je istekla. Prijavite se ponovo.');
+    }
+
+    final response = await Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl))
+        .post<Map<String, dynamic>>(
+          '/api/auth/refresh',
+          data: {'refreshToken': refreshToken},
+        );
+    final data = response.data;
+    if (data == null) {
+      throw const ApiException(
+        'Server je vratio neispravan odgovor za sesiju.',
+      );
+    }
+
+    final refreshed = AuthSession.fromAuthResponse(data);
+    await sessionStore.save(refreshed);
+    return refreshed;
+  }
 
   Never throwApiError(Object error) {
     if (error is DioException) {

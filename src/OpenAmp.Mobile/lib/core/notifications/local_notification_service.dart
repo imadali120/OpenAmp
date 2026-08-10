@@ -25,15 +25,16 @@ class LocalNotificationService {
     iOS: DarwinNotificationDetails(),
   );
 
-  Future<void> initialize() async {
-    if (_initialized || kIsWeb) return;
+  Future<bool> initialize() async {
+    if (_initialized) return true;
+    if (kIsWeb) return false;
     if (defaultTargetPlatform != TargetPlatform.android &&
         defaultTargetPlatform != TargetPlatform.iOS) {
-      return;
+      return false;
     }
     tz_data.initializeTimeZones();
     try {
-      await _plugin.initialize(
+      final initializationResult = await _plugin.initialize(
         settings: const InitializationSettings(
           android: AndroidInitializationSettings('app_icon'),
           iOS: DarwinInitializationSettings(
@@ -43,14 +44,24 @@ class LocalNotificationService {
           ),
         ),
       );
-      _initialized = true;
+      // On iOS this result represents the initial permission request. It is
+      // false when all request flags above are disabled even though the plugin
+      // initialized successfully. A platform exception still indicates a real
+      // initialization failure and is handled below.
+      _initialized = defaultTargetPlatform == TargetPlatform.iOS
+          ? true
+          : initializationResult == true;
+      return _initialized;
     } catch (error) {
       debugPrint('Notification initialization failed: $error');
+      return false;
     }
   }
 
-  Future<bool> requestPermission() async {
-    await initialize();
+  /// Returns `null` when local notifications are unavailable or initialization
+  /// failed, and a boolean only when the platform permission was checked.
+  Future<bool?> requestPermission() async {
+    if (!await initialize()) return null;
     if (defaultTargetPlatform == TargetPlatform.android) {
       return await _plugin
               .resolvePlatformSpecificImplementation<
@@ -67,15 +78,14 @@ class LocalNotificationService {
               ?.requestPermissions(alert: true, badge: true, sound: true) ??
           false;
     }
-    return false;
+    return null;
   }
 
   Future<void> syncReservations({
     required bool enabled,
     required List<Reservation> reservations,
   }) async {
-    await initialize();
-    if (!_initialized) return;
+    if (!await initialize()) return;
     await _plugin.cancelAllPendingNotifications();
     if (!enabled) return;
 
@@ -101,14 +111,19 @@ class LocalNotificationService {
     }
   }
 
-  Future<void> showTest() async {
-    await initialize();
-    if (!_initialized) return;
-    await _plugin.show(
-      id: 900001,
-      title: 'OpenAmp notifikacije su uključene',
-      body: 'Podsjetnik za probu će stići 2 sata prije termina.',
-      notificationDetails: _details,
-    );
+  Future<bool> showTest() async {
+    if (!await initialize()) return false;
+    try {
+      await _plugin.show(
+        id: 900001,
+        title: 'OpenAmp notifikacije su uključene',
+        body: 'Podsjetnik za probu će stići 2 sata prije termina.',
+        notificationDetails: _details,
+      );
+      return true;
+    } catch (error) {
+      debugPrint('Test notification failed: $error');
+      return false;
+    }
   }
 }

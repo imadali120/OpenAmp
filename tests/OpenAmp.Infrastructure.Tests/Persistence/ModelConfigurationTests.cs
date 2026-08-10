@@ -38,9 +38,10 @@ public sealed class ModelConfigurationTests
         using var context = KreirajSqlServerContext();
         var key = context.Model.FindEntityType(typeof(ClanBenda))?.FindPrimaryKey();
 
+        Assert.NotNull(key);
         Assert.Equal(
             [nameof(ClanBenda.BendId), nameof(ClanBenda.KorisnikId)],
-            key?.Properties.Select(x => x.Name).ToArray());
+            key.Properties.Select(x => x.Name).ToArray());
     }
 
     [Fact]
@@ -61,7 +62,8 @@ public sealed class ModelConfigurationTests
         using var context = KreirajSqlServerContext();
         var key = context.Model.FindEntityType(typeof(StripeWebhookDogadjaj))?.FindPrimaryKey();
 
-        Assert.Equal([nameof(StripeWebhookDogadjaj.Id)], key?.Properties.Select(x => x.Name).ToArray());
+        Assert.NotNull(key);
+        Assert.Equal([nameof(StripeWebhookDogadjaj.Id)], key.Properties.Select(x => x.Name).ToArray());
     }
 
     [Fact]
@@ -70,9 +72,10 @@ public sealed class ModelConfigurationTests
         using var context = KreirajSqlServerContext();
         var key = context.Model.FindEntityType(typeof(OmiljenaSala))?.FindPrimaryKey();
 
+        Assert.NotNull(key);
         Assert.Equal(
             [nameof(OmiljenaSala.KorisnikId), nameof(OmiljenaSala.SalaId)],
-            key?.Properties.Select(x => x.Name).ToArray());
+            key.Properties.Select(x => x.Name).ToArray());
     }
 
     [Fact]
