@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const ink = Color(0xFF101114);
-  static const inkSoft = Color(0xFFD0D1D5);
-  static const canvas = Color(0xFF0C0D10);
-  static const paper = Color(0xFF17191E);
-  static const paperMuted = Color(0xFF24272E);
-  static const line = Color(0xFF363A43);
+  static const ink = Color(0xFF10100F);
+  static const inkSoft = Color(0xFFD2D0CA);
+  static const canvas = Color(0xFF0D0D0C);
+  static const paper = Color(0xFF181817);
+  static const paperMuted = Color(0xFF232321);
+  static const line = Color(0xFF33332F);
   static const primary = Color(0xFFFF633D);
   static const primarySoft = Color(0xFF3A211B);
   static const signal = Color(0xFFFF633D);
   static const signalSoft = Color(0xFF3A211B);
-  static const text = Color(0xFFF4F1EA);
-  static const textMuted = Color(0xFFA3A7B0);
+  static const text = Color(0xFFF3F1EB);
+  static const textMuted = Color(0xFFA5A39C);
   static const success = Color(0xFF42C995);
   static const successSoft = Color(0xFF17352B);
   static const danger = Color(0xFFFF667D);
@@ -176,7 +176,7 @@ abstract final class OpenAmpTheme {
           vertical: 16,
         ),
         labelStyle: const TextStyle(color: AppColors.textMuted),
-        hintStyle: const TextStyle(color: Color(0xFF938B96)),
+        hintStyle: const TextStyle(color: Color(0xFF8F8E88)),
         prefixIconColor: AppColors.textMuted,
         suffixIconColor: AppColors.textMuted,
         border: inputBorder(AppColors.line),

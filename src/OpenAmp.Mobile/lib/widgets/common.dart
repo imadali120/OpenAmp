@@ -4,30 +4,100 @@ import 'package:intl/intl.dart';
 import 'package:openamp_mobile/core/theme/app_theme.dart';
 
 class OpenAmpLogo extends StatelessWidget {
-  const OpenAmpLogo({super.key, this.compact = false, this.onDark = false});
+  const OpenAmpLogo({
+    super.key,
+    this.compact = false,
+    this.onDark = false,
+    this.withMark = false,
+  });
 
   final bool compact;
   final bool onDark;
+  final bool withMark;
 
   @override
-  Widget build(BuildContext context) => Text.rich(
-    TextSpan(
-      children: [
-        const TextSpan(text: 'Open'),
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (withMark) ...[
+        _OpenAmpMark(size: compact ? 38 : 48),
+        SizedBox(width: compact ? 10 : 13),
+      ],
+      Text.rich(
         TextSpan(
-          text: 'Amp',
-          style: TextStyle(
-            color: onDark ? AppColors.signal : AppColors.primary,
+          children: [
+            const TextSpan(text: 'Open'),
+            TextSpan(
+              text: 'Amp',
+              style: TextStyle(
+                color: onDark ? AppColors.signal : AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        style: TextStyle(
+          color: onDark ? Colors.white : AppColors.ink,
+          fontSize: compact ? 21 : 29,
+          height: 1,
+          fontWeight: FontWeight.w900,
+          letterSpacing: compact ? -0.8 : -1.2,
+        ),
+      ),
+    ],
+  );
+}
+
+class _OpenAmpMark extends StatelessWidget {
+  const _OpenAmpMark({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    padding: EdgeInsets.all(size * .14),
+    decoration: BoxDecoration(
+      color: AppColors.text,
+      borderRadius: BorderRadius.circular(size * .25),
+    ),
+    child: Column(
+      children: [
+        SizedBox(
+          height: size * .18,
+          child: Row(
+            children: [
+              Container(
+                width: size * .2,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: AppColors.signal,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Spacer(),
+              ...List.generate(
+                3,
+                (_) => Container(
+                  width: size * .07,
+                  height: size * .07,
+                  margin: EdgeInsets.only(left: size * .06),
+                  decoration: const BoxDecoration(
+                    color: AppColors.ink,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+        const Spacer(),
+        Icon(
+          Icons.graphic_eq_rounded,
+          color: AppColors.signal,
+          size: size * .47,
+        ),
       ],
-    ),
-    style: TextStyle(
-      color: onDark ? Colors.white : AppColors.ink,
-      fontSize: compact ? 21 : 29,
-      height: 1,
-      fontWeight: FontWeight.w900,
-      letterSpacing: compact ? -0.8 : -1.2,
     ),
   );
 }

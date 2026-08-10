@@ -45,28 +45,12 @@ class ProfileScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.ink,
+                color: AppColors.paper,
                 borderRadius: BorderRadius.circular(AppRadii.large),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      SectionEyebrow('Profil', color: AppColors.signal),
-                      Spacer(),
-                      Text(
-                        'AKTIVAN',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 23),
                   Row(
                     children: [
                       Container(
@@ -99,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.text,
                                 fontSize: 23,
                                 height: 1,
                                 fontWeight: FontWeight.w900,
@@ -122,7 +106,7 @@ class ProfileScreen extends ConsumerWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white60,
+                                color: AppColors.textMuted,
                                 fontSize: 12,
                               ),
                             ),
@@ -132,34 +116,14 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                   if (profile.instruments.isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: profile.instruments
-                          .map(
-                            (item) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white10,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: Text(
-                                item.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: .7,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                    const SizedBox(height: 15),
+                    Text(
+                      profile.instruments.join('  ·  '),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ],
@@ -167,11 +131,9 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: AppColors.line),
-                  bottom: BorderSide(color: AppColors.line),
-                ),
+              decoration: BoxDecoration(
+                color: AppColors.paper,
+                borderRadius: BorderRadius.circular(AppRadii.medium),
               ),
               child: IntrinsicHeight(
                 child: Row(
@@ -190,81 +152,48 @@ class ProfileScreen extends ConsumerWidget {
                       value: profile.totalHours.toStringAsFixed(0),
                       label: 'Sati',
                     ),
-                    const VerticalDivider(width: 1, color: AppColors.line),
-                    _Stat(
-                      value: profile.reviewCount.toString(),
-                      label: 'Recenzije',
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.medium),
+              child: ColoredBox(
+                color: AppColors.paper,
+                child: Column(
+                  children: [
+                    _ProfileAction(
+                      icon: Icons.person_outline,
+                      label: 'Uredi profil',
+                      onTap: () => _editProfile(context, ref),
+                    ),
+                    _ProfileAction(
+                      icon: Icons.notifications_none_rounded,
+                      label: 'Notifikacije',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      ),
+                    ),
+                    _ProfileAction(
+                      icon: Icons.tune_rounded,
+                      label: 'Jezik i privatnost',
+                      onTap: () => _editSettings(context, ref),
+                    ),
+                    _ProfileAction(
+                      icon: Icons.lock_outline_rounded,
+                      label: 'Sigurnost i lozinka',
+                      showDivider: false,
+                      onTap: () => _changePassword(context, ref),
                     ),
                   ],
                 ),
               ),
             ),
-            if (profile.favoriteHall != null || profile.topGenre != null) ...[
-              const SizedBox(height: 27),
-              const SectionEyebrow('Statistika'),
-              const SizedBox(height: 9),
-              Text(
-                'Studio statistika',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 11),
-              Row(
-                children: [
-                  if (profile.favoriteHall != null)
-                    Expanded(
-                      child: _Highlight(
-                        icon: Icons.favorite_outline_rounded,
-                        label: 'OMILJENA SALA',
-                        value: profile.favoriteHall!,
-                      ),
-                    ),
-                  if (profile.favoriteHall != null && profile.topGenre != null)
-                    const SizedBox(width: 10),
-                  if (profile.topGenre != null)
-                    Expanded(
-                      child: _Highlight(
-                        icon: Icons.graphic_eq_rounded,
-                        label: 'NAJČEŠĆI ŽANR',
-                        value: profile.topGenre!,
-                      ),
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 27),
-            const SectionEyebrow('Postavke'),
-            const SizedBox(height: 8),
-            _ProfileAction(
-              icon: Icons.person_outline,
-              label: 'Lični profil',
-              onTap: () => _editProfile(context, ref),
-            ),
-            _ProfileAction(
-              icon: Icons.credit_card_outlined,
-              label: 'Načini plaćanja',
-              onTap: () => _paymentMethodsInfo(context),
-            ),
-            _ProfileAction(
-              icon: Icons.notifications_none_rounded,
-              label: 'Notifikacije',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const NotificationsScreen(),
-                ),
-              ),
-            ),
-            _ProfileAction(
-              icon: Icons.tune_rounded,
-              label: 'Jezik i privatnost',
-              onTap: () => _editSettings(context, ref),
-            ),
-            _ProfileAction(
-              icon: Icons.lock_outline_rounded,
-              label: 'Sigurnost i lozinka',
-              onTap: () => _changePassword(context, ref),
-            ),
-            const SizedBox(height: 18),
-            OutlinedButton.icon(
+            const SizedBox(height: 12),
+            TextButton.icon(
               onPressed: ref.read(appControllerProvider.notifier).logout,
               icon: const Icon(Icons.logout_rounded),
               label: const Text('Odjavi se'),
@@ -646,24 +575,6 @@ class ProfileScreen extends ConsumerWidget {
       }
     } catch (_) {}
   }
-
-  Future<void> _paymentMethodsInfo(BuildContext context) => showDialog<void>(
-    context: context,
-    builder: (context) => AlertDialog(
-      icon: const Icon(Icons.credit_card_rounded, size: 46),
-      title: const Text('Sačuvane kartice'),
-      content: const Text(
-        'Kartice se sigurno čuvaju kod Stripea, ne u OpenAmp bazi. Tokom sljedećeg plaćanja možeš sačuvati novu ili ukloniti postojeću karticu direktno u Stripe PaymentSheetu.',
-        textAlign: TextAlign.center,
-      ),
-      actions: [
-        FilledButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('U redu'),
-        ),
-      ],
-    ),
-  );
 }
 
 class _ProfileInitials extends StatelessWidget {
@@ -717,70 +628,28 @@ class _Stat extends StatelessWidget {
   );
 }
 
-class _Highlight extends StatelessWidget {
-  const _Highlight({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 114,
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.paper,
-      borderRadius: BorderRadius.circular(AppRadii.medium),
-      border: Border.all(color: AppColors.line),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColors.signal, size: 20),
-        const Spacer(),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 8,
-            fontWeight: FontWeight.w900,
-            letterSpacing: .8,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w900),
-        ),
-      ],
-    ),
-  );
-}
-
 class _ProfileAction extends StatelessWidget {
   const _ProfileAction({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.showDivider = true,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.line)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      decoration: BoxDecoration(
+        border: showDivider
+            ? const Border(bottom: BorderSide(color: AppColors.line))
+            : null,
       ),
       child: Row(
         children: [
@@ -792,7 +661,11 @@ class _ProfileAction extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
-          const Icon(Icons.arrow_forward_rounded, size: 19),
+          const Icon(
+            Icons.arrow_forward_rounded,
+            size: 18,
+            color: AppColors.textMuted,
+          ),
         ],
       ),
     ),

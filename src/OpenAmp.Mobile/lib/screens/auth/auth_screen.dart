@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:openamp_mobile/core/theme/app_theme.dart';
 import 'package:openamp_mobile/state/app_state.dart';
 import 'package:openamp_mobile/widgets/common.dart';
 
@@ -63,198 +62,165 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final state = ref.watch(appControllerProvider);
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-                decoration: const BoxDecoration(
-                  color: AppColors.ink,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Form(
+                key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [const OpenAmpLogo(onDark: true)],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _ModeSwitch(
-                          register: _register,
-                          onChanged: _setRegister,
-                        ),
-                        const SizedBox(height: 26),
-                        Text(
-                          _register ? 'Registracija' : 'Prijava',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _register
-                              ? 'Unesi podatke za novi korisnički račun.'
-                              : 'Unesi email ili username i lozinku.',
-                        ),
-                        const SizedBox(height: 20),
-                        if (state.error != null)
-                          ErrorBanner(
-                            message: state.error!,
-                            onRetry: ref
-                                .read(appControllerProvider.notifier)
-                                .clearError,
-                          ),
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 200),
-                          alignment: Alignment.topCenter,
-                          child: _register
-                              ? Column(
-                                  children: [
-                                    TextFormField(
-                                      controller: _username,
-                                      textInputAction: TextInputAction.next,
-                                      autocorrect: false,
-                                      enableSuggestions: false,
-                                      autofillHints: const [
-                                        AutofillHints.newUsername,
-                                      ],
-                                      decoration: const InputDecoration(
-                                        labelText: 'Username',
-                                        prefixIcon: Icon(
-                                          Icons.alternate_email_rounded,
-                                        ),
-                                        helperText:
-                                            '3–30 znakova: mala slova, brojevi, . i _',
-                                      ),
-                                      validator: _validateUsername,
-                                    ),
-                                    const SizedBox(height: 11),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextFormField(
-                                            controller: _firstName,
-                                            textInputAction:
-                                                TextInputAction.next,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Ime',
-                                            ),
-                                            validator: _required,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: TextFormField(
-                                            controller: _lastName,
-                                            textInputAction:
-                                                TextInputAction.next,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Prezime',
-                                            ),
-                                            validator: _required,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 11),
-                                    TextFormField(
-                                      controller: _phone,
-                                      keyboardType: TextInputType.phone,
-                                      textInputAction: TextInputAction.next,
-                                      validator: _validatePhone,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Telefon (opcionalno)',
-                                        prefixIcon: Icon(Icons.phone_outlined),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 11),
-                                  ],
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                        TextFormField(
-                          controller: _email,
-                          keyboardType: _register
-                              ? TextInputType.emailAddress
-                              : TextInputType.text,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
-                          decoration: InputDecoration(
-                            labelText: _register
-                                ? 'Email'
-                                : 'Email ili username',
-                            prefixIcon: const Icon(
-                              Icons.alternate_email_rounded,
-                            ),
-                          ),
-                          validator: (value) {
-                            final text = value?.trim() ?? '';
-                            if (_register) {
-                              return text.contains('@')
-                                  ? null
-                                  : 'Unesite ispravan email.';
-                            }
-                            return text.length >= 3
-                                ? null
-                                : 'Unesite email ili username.';
-                          },
-                        ),
-                        const SizedBox(height: 11),
-                        TextFormField(
-                          controller: _password,
-                          obscureText: _obscure,
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _submit(),
-                          autofillHints: const [AutofillHints.password],
-                          decoration: InputDecoration(
-                            labelText: 'Lozinka',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                            suffixIcon: IconButton(
-                              onPressed: () =>
-                                  setState(() => _obscure = !_obscure),
-                              icon: Icon(
-                                _obscure
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                            ),
-                          ),
-                          validator: (value) => _register
-                              ? _validatePassword(value)
-                              : _requiredPassword(value),
-                        ),
-                        const SizedBox(height: 16),
-                        SignalButton(
-                          label: _register ? 'Kreiraj račun' : 'Prijavi se',
-                          onPressed: _submit,
-                          loading: state.busy,
-                        ),
-                        const SizedBox(height: 13),
-                        if (_register)
-                          const Text(
-                            'Registracijom prihvataš pravila korištenja platforme.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11,
-                            ),
-                          ),
-                      ],
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Align(
+                      alignment: Alignment.center,
+                      child: OpenAmpLogo(onDark: true, withMark: true),
                     ),
-                  ),
+                    const SizedBox(height: 44),
+                    Text(
+                      _register ? 'Kreiraj račun' : 'Prijava',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 22),
+                    if (state.error != null)
+                      ErrorBanner(
+                        message: state.error!,
+                        onRetry: ref
+                            .read(appControllerProvider.notifier)
+                            .clearError,
+                      ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 200),
+                      alignment: Alignment.topCenter,
+                      child: _register
+                          ? Column(
+                              children: [
+                                TextFormField(
+                                  controller: _username,
+                                  textInputAction: TextInputAction.next,
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  autofillHints: const [
+                                    AutofillHints.newUsername,
+                                  ],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Username',
+                                    prefixIcon: Icon(
+                                      Icons.alternate_email_rounded,
+                                    ),
+                                    helperText:
+                                        '3–30 znakova: mala slova, brojevi, . i _',
+                                  ),
+                                  validator: _validateUsername,
+                                ),
+                                const SizedBox(height: 11),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _firstName,
+                                        textInputAction: TextInputAction.next,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Ime',
+                                        ),
+                                        validator: _required,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _lastName,
+                                        textInputAction: TextInputAction.next,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Prezime',
+                                        ),
+                                        validator: _required,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 11),
+                                TextFormField(
+                                  controller: _phone,
+                                  keyboardType: TextInputType.phone,
+                                  textInputAction: TextInputAction.next,
+                                  validator: _validatePhone,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Telefon (opcionalno)',
+                                    prefixIcon: Icon(Icons.phone_outlined),
+                                  ),
+                                ),
+                                const SizedBox(height: 11),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    TextFormField(
+                      controller: _email,
+                      keyboardType: _register
+                          ? TextInputType.emailAddress
+                          : TextInputType.text,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: InputDecoration(
+                        labelText: _register ? 'Email' : 'Email ili username',
+                        prefixIcon: const Icon(Icons.alternate_email_rounded),
+                      ),
+                      validator: (value) {
+                        final text = value?.trim() ?? '';
+                        if (_register) {
+                          return text.contains('@')
+                              ? null
+                              : 'Unesite ispravan email.';
+                        }
+                        return text.length >= 3
+                            ? null
+                            : 'Unesite email ili username.';
+                      },
+                    ),
+                    const SizedBox(height: 11),
+                    TextFormField(
+                      controller: _password,
+                      obscureText: _obscure,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submit(),
+                      autofillHints: const [AutofillHints.password],
+                      decoration: InputDecoration(
+                        labelText: 'Lozinka',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        suffixIcon: IconButton(
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                      ),
+                      validator: (value) => _register
+                          ? _validatePassword(value)
+                          : _requiredPassword(value),
+                    ),
+                    const SizedBox(height: 16),
+                    SignalButton(
+                      label: _register ? 'Kreiraj račun' : 'Prijavi se',
+                      onPressed: _submit,
+                      loading: state.busy,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => _setRegister(!_register),
+                      child: Text(
+                        _register
+                            ? 'Već imaš račun? Prijavi se'
+                            : 'Nemaš račun? Registruj se',
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -295,73 +261,4 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ? null
         : '10+ znakova, veliko i malo slovo, broj i poseban znak.';
   }
-}
-
-class _ModeSwitch extends StatelessWidget {
-  const _ModeSwitch({required this.register, required this.onChanged});
-
-  final bool register;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: AppColors.paperMuted,
-      borderRadius: BorderRadius.circular(AppRadii.medium),
-      border: Border.all(color: AppColors.line),
-    ),
-    child: Row(
-      children: [
-        _ModeOption(
-          label: 'Prijava',
-          selected: !register,
-          onTap: () => onChanged(false),
-        ),
-        _ModeOption(
-          label: 'Registracija',
-          selected: register,
-          onTap: () => onChanged(true),
-        ),
-      ],
-    ),
-  );
-}
-
-class _ModeOption extends StatelessWidget {
-  const _ModeOption({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: InkWell(
-      borderRadius: BorderRadius.circular(9),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 170),
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.ink : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: Text(
-          label.toUpperCase(),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? Colors.white : AppColors.textMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            letterSpacing: .85,
-          ),
-        ),
-      ),
-    ),
-  );
 }
