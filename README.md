@@ -151,7 +151,6 @@ flutter build windows --release
 
 ## Artefakti za predaju
 
-- Ažurirana prijava teme: [`output/docs/Mahovic_Imad_Ali_RS2_Prijava_v2_UPDATED.docx`](output/docs/Mahovic_Imad_Ali_RS2_Prijava_v2_UPDATED.docx)
 - Dokument sistema preporuka: [`output/pdf/recommender-dokumentacija.pdf`](output/pdf/recommender-dokumentacija.pdf)
 - Android i Windows release buildovi: [`output/builds/fit-build-2026-08-20.zip`](output/builds/fit-build-2026-08-20.zip)
 - Lozinka build arhive: `fit`
