@@ -152,7 +152,7 @@ flutter build windows --release
 ## Artefakti za predaju
 
 - Dokument sistema preporuka: [`output/pdf/recommender-dokumentacija.pdf`](output/pdf/recommender-dokumentacija.pdf)
-- Android i Windows release buildovi: [`output/builds/fit-build-2026-08-10.zip`](output/builds/fit-build-2026-08-10.zip)
+- Android i Windows release buildovi: [`output/builds/fit-build-2026-08-20.zip`](output/builds/fit-build-2026-08-20.zip)
 - Lozinka build arhive: `fit`
 - Build manifest i SHA-256 vrijednosti: [`output/builds/BUILD-MANIFEST.txt`](output/builds/BUILD-MANIFEST.txt)
 

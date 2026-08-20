@@ -1,8 +1,11 @@
 OPENAMP RELEASE BUILD MANIFEST
 ==============================
 
-Build date: 2026-08-10
+Build date: 2026-08-20
 Archive password: fit
+Archive: fit-build-2026-08-20.zip
+Archive size: 50031770 bytes
+Archive SHA-256: E5EC19CFF1403E8943C06AEB13DF99072978843AD7883B7CEA109174C40901A1
 
 ANDROID
 -------
@@ -12,21 +15,21 @@ Version: 1.0.0 (1)
 Minimum SDK: 24
 Target SDK: 36
 API URL: http://10.0.2.2:5264
-Size: 68862736 bytes
-SHA-256: 8F7A19C8CB2ACBB39C4FC3E87701E04D9916FFA5C6924ED1396A538BA35DCCDE
-Verification: release APK installed and launched on emulator-5554. Test
-notification was posted on the openamp_rehearsals channel without runtime,
-platform or icon errors.
+Size: 68874036 bytes
+SHA-256: 2C7C3A8E7996C56A773DDF1845F2569636E4F7ACE112EFB296E5C9FA5D0FEE26
+Verification: release APK freshly installed on emulator-5554. Login with the
+seed musician account and the API-backed home screen both succeeded. Android,
+Flutter and fatal exception logs contained no application runtime errors.
 
 WINDOWS
 -------
 Path in archive: windows/Release/openamp_mobile.exe
 API URL: http://127.0.0.1:5264
-Release folder: 22 files, 36.34 MB
+Release folder: 22 files, 38103593 bytes
 EXE size: 59392 bytes
-EXE SHA-256: 157D1BF5F7AEC73ABF91B919D7B568B3128C47360953FB5B2E71BDCD84F3F4A9
+EXE SHA-256: 5528DDC4AA7DB7125562A19374BABE5B4584FB77ECAFAD65F2EEF6A20F7FFC7F
 Verification: executable launched from the Release folder and remained
-responsive with window title "OpenAmp Studio".
+running and responsive while connected to the local API.
 
 QUALITY CHECKS
 --------------
@@ -36,6 +39,8 @@ Flutter analyze: no issues found
 Flutter tests: 5 passed, 0 failed
 NuGet vulnerability audit: no known vulnerable packages
 API health check: HTTP 200 Healthy
+Archive verification: password-protected extraction succeeded; all 23 files
+were present and APK/EXE checksums matched the source release artifacts
 
 BUILD COMMANDS
 --------------
